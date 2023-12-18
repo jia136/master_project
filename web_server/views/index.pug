@@ -1,0 +1,38 @@
+extends layout
+
+block content
+  .header
+    h1= title
+  .navbar
+    a(href='#') Sensors
+    a(href='#') Security
+    a(href='#') Log file
+    a.right(href='#') About project
+  .row
+    .side
+      h2 ESP32 sensors
+      ul 
+        li Temperature
+          p#paraIDtemp [no data]
+        li Pressure
+          p#paraIDpres [no data]
+        li Humidity
+          p#paraIDhumi [no data]
+    .main
+      h2 ESP security
+        h3 Movement          
+        h3 Camera
+      h2 ESP32 log file
+      button.button.button1#btn1ID Show log file
+      .scrollbox        
+        p#paraID ...
+      .menu
+        label(for='log_level') Choose log level: 
+        select#log_level
+          option(value=' error ') Error
+          option(value=' debug ') Debug
+          option(value=' info ') Info
+        button.button.button2#btn2ID Change log level
+  .footer
+    p Author: Jelena Marinkovic FTN Novi Sad Serbia
+    p december 2023

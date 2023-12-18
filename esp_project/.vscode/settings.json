@@ -1,0 +1,23 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "C_Cpp.errorSquiggles": "disabled",
+  "idf.portWin" : "COM3",
+  "idf.flashType" : "UART",
+  "files.associations" :{
+    "buzzer.h": "c",
+    "hc_sr04.h": "c",
+    "motion.h": "c",
+    "*inc": "c",
+    "esp_err.h": "c",
+    "ets_sys.h": "c",
+    "iterator": "c",
+    "gpio.h": "c",
+    "wifi.h": "c",
+    "esp_time.h": "c",
+    "ip_addr.h": "c",
+    "esp_sleep.h": "c",
+    "esp_sntp.h": "c"
+  },
+  "idf.adapterTargetName": "esp32"
+
+}
