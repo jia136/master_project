@@ -12,6 +12,15 @@ import cookieParser from 'cookie-parser'
 import logger from 'morgan'
 import indexRouter from './routes/index.js'
 import usersRouter from './routes/users.js'
+import WebSocket from 'ws'
+import { WebSocketServer } from 'ws';
+//import multer from 'multer'
+import fs from 'fs'
+import bodyParser from 'body-parser';
+
+// Allow assets directory listings
+import serveIndex from 'serve-index'; 
+
 
 var app = express();
 
@@ -24,9 +33,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/images', serveIndex(path.join(__dirname, '/images')))
+
+app.use(bodyParser.raw({
+  type: 'image/jpg',
+  limit: '10mb'
+}));
+
+//app.use('/images', express.static('images'));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+
+const wss = new WebSocketServer({ port: 5000 });
+
+app.locals.temperatura = "123"
 
 //MySQL ESP all inforamtion
 app.get('/ESPdata', async (req, res) => {
@@ -47,6 +68,32 @@ app.post('/ESPdata', async (req, res) => {
   res.status(201).send(sensor_data)
 });
 
+/*app.post('/temperature', async (req, res) => {
+  //var temp_val = { temp: req.body.temp }
+  //console.log(temp_val)
+  //app.locals.temperatura = JSON.stringify(temp_val)
+  //res.status(201).send(temp_val)
+  res.sendStatus(201);
+});*/
+
+app.post('/test', async(req, res) => {    
+
+  req.pipe(fs.createWriteStream('./public/images/image.jpg'))
+  .on('close', () => {
+    console.log('Image downloaded successfully!');
+  })
+  .on('error', (err) => {
+    console.error('Error downloading the image:', err);
+  });
+  
+  res.sendStatus(201)
+});
+
+app.get('/test', async (req, res) => {
+
+  res.sendStatus(201)
+});
+
 app.post('/clicked', async (req, res) => {
   const ESPdata = await getESPdata();
   res.status(201).send(ESPdata)
@@ -55,6 +102,35 @@ app.post('/clicked', async (req, res) => {
 app.post('/loglevel', async (req, res) => {
   var log_level = { esp_log_level: req.body.esp_log_level }
   res.status(201).send(log_level)
+});
+
+wss.on('connection', function connection(ws) {
+  console.log('A new client Connected!');
+  ws.send('Welcome New Client!');
+
+  ws.on('message', function incoming(message) {
+    console.log('received: %s', message);
+
+    wss.clients.forEach(function each(client) {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+    
+  });
+});
+
+app.get('/image', async (req, res) => {
+  
+  var obj    = {};
+  var files  = fs.readdirSync('./images');
+  obj = files;
+
+  res.json({
+    status: 'success',
+    data: JSON.stringify(obj) 
+  });
+
 });
 
 // catch 404 and forward to error handler

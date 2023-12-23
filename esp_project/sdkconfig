@@ -149,6 +149,14 @@ CONFIG_ESP_WIFI_AUTH_OPEN=y
 # end of wifi my Configuration
 
 #
+# Socket Configuration
+#
+CONFIG_WEBSOCKET_URI_FROM_STRING=y
+# CONFIG_WEBSOCKET_URI_FROM_STDIN is not set
+CONFIG_WEBSOCKET_URI="ws://192.168.1.7:5000"
+# end of Socket Configuration
+
+#
 # Example Configuration
 #
 CONFIG_SNTP_TIME_SERVER="pool.ntp.org"

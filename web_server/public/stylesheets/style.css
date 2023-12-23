@@ -140,15 +140,21 @@ body {
   margin-top: 50px;
 }
 
-
-/*ul {
-  list-style: none;
+.container {
+  margin-top: 10px
 }
 
-li {
-  display: inline-block;
-  margin-right: 20px;
-}*/
+.table { 
+  table-layout: auto;
+  width: 100%;
+  border: 2px solid #1abc9c;
+}
+
+.th .td {
+  text-align: center;
+  color: darksalmon;
+  font-size: 10px;
+}
 
 /* Responsive layout - when the screen is less than 700px wide, make the two columns stack on top of each other instead of next to each other */
 @media screen and (max-width: 700px) {

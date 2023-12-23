@@ -13,7 +13,7 @@ block content
       h2 ESP32 sensors
       ul 
         li Temperature
-          p#paraIDtemp [no data]
+          p#paraIDtemp= temp_value
         li Pressure
           p#paraIDpres [no data]
         li Humidity
@@ -22,6 +22,24 @@ block content
       h2 ESP security
         h3 Movement          
         h3 Camera
+        .container
+          .card
+            .card-header
+            .card-block
+              table.table
+                thead
+                  tr
+                    th
+                      | Name
+                    th
+                      | Size
+                    th
+                      | Download
+                    th
+                      | View
+                tbody
+                //div(data-objData=data)
+
       h2 ESP32 log file
       button.button.button1#btn1ID Show log file
       .scrollbox        

@@ -31,7 +31,8 @@ void post_rest_function() {
         
     esp_http_client_handle_t client = esp_http_client_init(&config_post);
 
-    char  *post_data = "test ...";
+    //char  *post_data = "test ...";
+    char  *post_data = "{\"temp\":\"21.5\"}";
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
     esp_http_client_set_header(client, "Content-Type", "application/json");
 

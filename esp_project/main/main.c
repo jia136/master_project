@@ -14,6 +14,7 @@
 #include "wifi.h"
 #include "esp_time.h"
 #include "esp_web.h"
+#include "socket.h"
 
 #define MAX_DISTANCE_CM 500 // 5m max distance for ultrasonic sensor
 
@@ -162,5 +163,6 @@ void app_main(void) {
 
     wifi_init();
     time_init();
-    post_rest_function();
+    //post_rest_function();
+    websocket_app_start();
 }
