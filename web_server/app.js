@@ -21,9 +21,6 @@ import bodyParser from 'body-parser';
 
 // Allow assets directory listings
 import serveIndex from 'serve-index'; 
-import { request } from 'http';
-
-
 
 var app = express();
 
@@ -50,7 +47,8 @@ app.use('/users', usersRouter);
 
 const wss = new WebSocketServer({ port: 5000 });
 
-app.locals.temperatura = "123"
+app.locals.temperatura = "123";
+app.locals.imageNum = 0;
 
 //MySQL ESP all inforamtion
 app.get('/ESPdata', async (req, res) => {
@@ -79,17 +77,18 @@ app.post('/ESPdata', async (req, res) => {
   res.sendStatus(201);
 });*/
 
-app.post('/test', async(req, res) => {    
+app.post('/test', async(req, res) => {
 
-  req.pipe(fs.createWriteStream('./images/image.jpg'))
+  req.pipe(fs.createWriteStream('./images/image_' + app.locals.imageNum + '.jpg' ))
   .on('close', () => {
     console.log('Image downloaded successfully!');
   })
   .on('error', (err) => {
     console.error('Error downloading the image:', err);
   });
-  
+  app.locals.imageNum++;
   res.sendStatus(201)
+  
 });
 
 app.get('/test', async (req, res) => {

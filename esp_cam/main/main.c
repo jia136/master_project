@@ -34,9 +34,11 @@
 #include <nvs_flash.h>
 #include <sys/param.h>
 #include <string.h>
-
+#include <esp_err.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
+#include "driver/gpio.h"
 
 // support IDF 5.x
 #ifndef portTICK_RATE_MS
@@ -45,6 +47,7 @@
 
 #include "esp_camera.h"
 #include "esp_timer.h"
+#include "motion.h"
 
 #include <stdio.h>
 #include "freertos/timers.h"
@@ -104,6 +107,11 @@
 
 static const char *TAG = "example:take_picture";
 
+#define MOTION_GPIO             13
+#define MOTION_INPUT_PIN_SEL    (1ULL << MOTION_GPIO)
+
+#define ESP_INTR_FLAG_DEFAULT 0
+
 #if ESP_CAMERA_SUPPORTED
 static camera_config_t camera_config = {
     .pin_pwdn = CAM_PIN_PWDN,
@@ -136,6 +144,15 @@ static camera_config_t camera_config = {
     .fb_count = 1,       //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
     .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
 };
+
+static xQueueHandle gpio_evt_motion_queue = NULL;
+
+static void IRAM_ATTR gpio_isr_handler(void* arg) {
+
+    uint32_t gpio_num = (uint32_t) arg;
+    xQueueSendFromISR(gpio_evt_motion_queue, &gpio_num, NULL);
+
+}
 
 static esp_err_t init_camera(void) {
     //initialize the camera
@@ -217,7 +234,48 @@ void post_rest_function() {
 
 #endif
 
+static void gpio_camera_task(void* arg) {
+
+    uint32_t io_num;
+    for(;;) {
+        if ( xQueueReceive(gpio_evt_motion_queue, &io_num, portMAX_DELAY) ) {
+            post_rest_function();
+            ESP_LOGI(TAG, "Motion detected");
+            //vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+    }
+
+}
+
 void app_main(void) {
+    
+#if ESP_CAMERA_SUPPORTED
+    if(ESP_OK != init_camera()) {
+        return;
+    }
+    //zero-initialize the config structure.
+    gpio_config_t io_conf = {};
+    //interrupt of rising edge
+    io_conf.intr_type = GPIO_INTR_POSEDGE;
+    //bit mask of the pins
+    io_conf.pin_bit_mask = MOTION_INPUT_PIN_SEL;
+    //set as input mode
+    io_conf.mode = GPIO_MODE_INPUT;
+    //disable pull-down mode
+    io_conf.pull_down_en = 0;
+    //disable pull-up mode
+    io_conf.pull_up_en = 0;
+    gpio_config(&io_conf);
+    //create a queue to handle gpio event from isr
+    gpio_evt_motion_queue = xQueueCreate(10, sizeof(uint32_t));
+
+    //create task
+    xTaskCreate(gpio_camera_task, "gpio_camera_task", configMINIMAL_STACK_SIZE * 3, NULL, 10, NULL);
+    //install gpio isr service
+    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+    //hook isr handler for specific gpio pin
+    gpio_isr_handler_add(MOTION_GPIO, gpio_isr_handler, (void*) MOTION_GPIO);
+
     //wifi module
     esp_err_t ret_wifi = nvs_flash_init();
     if (ret_wifi == ESP_ERR_NVS_NO_FREE_PAGES || ret_wifi == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -227,18 +285,9 @@ void app_main(void) {
     ESP_ERROR_CHECK(ret_wifi);
 
     wifi_init();
-
-#if ESP_CAMERA_SUPPORTED
-    if(ESP_OK != init_camera()) {
-        return;
-    }
-
-    post_rest_function();
-
 #else
     ESP_LOGE(TAG, "Camera support is not available for this chip");
     return;
 #endif
-
 
 }

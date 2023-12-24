@@ -70,7 +70,6 @@ async function viewFunction(image_download) {
         const res = await fetch('/temp', {
             method: 'POST',
             headers: {
-                //'Content-Type': 'image/jpg'
                 'Content-Type':'application/json'
             },
             body: JSON.stringify({ name: image_download })
@@ -106,7 +105,7 @@ function loadTable(data) {
     if (data.length == 0) {
         tableHtml += "<tr>";
         tableHtml += `<td>"[no data]"</td>`;
-        tableHtml += `<td>"[no data]]"</td>`;
+        tableHtml += `<td>"[no data]"</td>`;
         tableHtml += `<td>"-"</td>`;
         tableHtml += `<td>"-"</td>`;
         tableHtml += "</tr>";
