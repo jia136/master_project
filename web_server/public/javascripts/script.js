@@ -64,7 +64,7 @@ const clickHandler2 = async () => {
 
 };
 
-async function downloadFunction(image_download) {
+async function viewFunction(image_download) {
 
     try {
         const res = await fetch('/temp', {
@@ -94,9 +94,9 @@ async function downloadFunction(image_download) {
     }
 }
 
-async function viewFunction(image_view) {
+/*async function viewFunction(image_view) {
     console.log(image_view);
-}
+}*/
 
 function loadTable(data) {
 
@@ -117,11 +117,14 @@ function loadTable(data) {
     
     obj.forEach(element => {
         console.log(element);
+        var created_time = element.image_time;
+        created_time = created_time.replace("T", " ");
+        created_time = created_time.replace("Z", " ");
         tableHtml += "<tr>";
         tableHtml += `<td>${element.image_name}</td>`;
-        tableHtml += `<td>${element.image_size} KB</td>`;
-        tableHtml += `<td><button class="download-row-btn" data-id=${element.image_name} onclick="downloadFunction('${element.image_name}')">Download</td>`;
+        tableHtml += `<td>${element.image_size} bytes</td>`;
         tableHtml += `<td><button class="view-row-btn" data-id=${element.image_name} onclick="viewFunction('${element.image_name}')">View</td>`;
+        tableHtml += `<td>${created_time}</td>`;
         tableHtml += "</tr>";
     });
 

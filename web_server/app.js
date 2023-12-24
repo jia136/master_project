@@ -133,21 +133,24 @@ app.post('/getImage' , async (req, res) => {
 app.get('/image', async (req, res) => {
   
   var file_size = {};
+  var file_time = {};
   var files  = fs.readdirSync('./images');
   console.log(files);
   files.forEach(function each(item, index) {
     file_size[index] = (fs.statSync('./images/' + item)).size;
+    file_time[index] = (fs.statSync('./images/' + item)).mtime;
   });
 
-  function Imagejson(image_name, image_size) {
+  function Imagejson(image_name, image_size, image_time) {
     this.image_name = image_name;
     this.image_size = image_size;
+    this.image_time = image_time;
   }
   // create an array restaurants
   var imagejson = [];
   // add objects to the array
   files.forEach(function each(item, index) {
-    imagejson.push(new Imagejson(item, file_size[index]));
+    imagejson.push(new Imagejson(item, file_size[index], file_time[index]));
   })
 
   res.json({
