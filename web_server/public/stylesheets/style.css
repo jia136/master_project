@@ -118,6 +118,20 @@ body {
   height: 150px;
 }
 
+.download-row-btn {
+  background-color: #1abc9c;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.view-row-btn {
+  background-color: #1abc9c;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
 /* Scrollbar styles */
 ::-webkit-scrollbar {
   width: 12px;
@@ -148,11 +162,11 @@ body {
   table-layout: auto;
   width: 100%;
   border: 2px solid #1abc9c;
+  text-align: center;
 }
 
 .th .td {
   text-align: center;
-  color: darksalmon;
   font-size: 10px;
 }
 

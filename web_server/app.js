@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser'
 import logger from 'morgan'
 import indexRouter from './routes/index.js'
 import usersRouter from './routes/users.js'
+
 import WebSocket from 'ws'
 import { WebSocketServer } from 'ws';
 //import multer from 'multer'
@@ -20,6 +21,8 @@ import bodyParser from 'body-parser';
 
 // Allow assets directory listings
 import serveIndex from 'serve-index'; 
+import { request } from 'http';
+
 
 
 var app = express();
@@ -78,7 +81,7 @@ app.post('/ESPdata', async (req, res) => {
 
 app.post('/test', async(req, res) => {    
 
-  req.pipe(fs.createWriteStream('./public/images/image.jpg'))
+  req.pipe(fs.createWriteStream('./images/image.jpg'))
   .on('close', () => {
     console.log('Image downloaded successfully!');
   })
@@ -120,17 +123,50 @@ wss.on('connection', function connection(ws) {
   });
 });
 
+app.post('/getImage' , async (req, res) => {
+  const send_image = req.body.name
+  console.log(send_image);
+  const stream_image = await fs.createReadStream('./images/'+ send_image);
+  stream_image.pipe(res);
+});
+
 app.get('/image', async (req, res) => {
   
-  var obj    = {};
+  var file_size = {};
   var files  = fs.readdirSync('./images');
-  obj = files;
+  console.log(files);
+  files.forEach(function each(item, index) {
+    file_size[index] = (fs.statSync('./images/' + item)).size;
+  });
+
+  function Imagejson(image_name, image_size) {
+    this.image_name = image_name;
+    this.image_size = image_size;
+  }
+  // create an array restaurants
+  var imagejson = [];
+  // add objects to the array
+  files.forEach(function each(item, index) {
+    imagejson.push(new Imagejson(item, file_size[index]));
+  })
 
   res.json({
     status: 'success',
-    data: JSON.stringify(obj) 
+    data: JSON.stringify(imagejson)
   });
 
+});
+
+app.post('/temp', async (req, res, next) => {
+
+  const send_image = req.body.name
+  console.log(send_image);
+  const stream_image = await fs.createReadStream('./images/' + send_image);
+  stream_image.pipe(res);
+  //res.sendFile(stream_image);
+  //const stream_image = await fs.createReadStream('./images/image.jpg').pipe(request.put('http://192.168.1.7:3000/image.jpg'));
+  //console.log('temp');
+  //res.status(200);
 });
 
 // catch 404 and forward to error handler
