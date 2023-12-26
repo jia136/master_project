@@ -22,17 +22,18 @@ esp_err_t client_event_post_handler(esp_http_client_event_handle_t evt) {
     return ESP_OK;
 }
 
-void post_rest_function() {
+void post_rest_function(float temp, float pres, int alarm_activation) {
     esp_http_client_config_t config_post = {
-        .url = "http://192.168.1.7:3000/test",
+        .url = "http://192.168.1.7:3000/sensor",
         .method = HTTP_METHOD_POST,
         .cert_pem = NULL,
         .event_handler = client_event_post_handler};
         
     esp_http_client_handle_t client = esp_http_client_init(&config_post);
-
-    //char  *post_data = "test ...";
-    char  *post_data = "{\"temp\":\"21.5\"}";
+    char buf[100];
+    snprintf(buf, 100, "{\"temp\":\"%.2f\", \"pres\":\"%.2f\",\"alarm\":\"%d\"}", temp, pres, alarm_activation);
+    //char  *post_data = "{\"temp\":\"21.5\"}";
+    char  *post_data = buf;
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
     esp_http_client_set_header(client, "Content-Type", "application/json");
 

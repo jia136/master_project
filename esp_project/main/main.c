@@ -6,11 +6,14 @@
 #include <freertos/task.h>
 #include "freertos/queue.h"
 #include "driver/gpio.h"
+#include "freertos/semphr.h"
+#include "driver/timer.h"
 #include <esp_err.h>
 #include "sdkconfig.h"
+#include "esp_log.h"
 #include "hc_sr04.h"
 #include "buzzer.h"
-#include "motion.h"
+#include "bmp280.h"
 #include "wifi.h"
 #include "esp_time.h"
 #include "esp_web.h"
@@ -19,38 +22,31 @@
 #define MAX_DISTANCE_CM 500 // 5m max distance for ultrasonic sensor
 
 //GPIO pins
+//Ultrasonic sensor
 #define TRIGGER_ULTRASONIC_GPIO 5
 #define ECHO_ULTRASONIC_GPIO    19
+//Buzzer-alarm
 #define BUZZER_GPIO             18
-#define MOTION_GPIO             4
-#define MOTION_INPUT_PIN_SEL    (1ULL << MOTION_GPIO)
-#define CAMERA_OUTPUT_GPIO      12
-#define CAMERA_OUTPUT_PIN_SEL   (1ULL << CAMERA_OUTPUT_GPIO)
+//BMP280
+#define BMP280_SCL_GPIO         22
+#define BMP280_SDA_GPIO         21
+//timer
+#define TIMER_DIVIDER   (16)
+#define DELAY_5_MIN     1500000000
+#define DELAY_1_MIN      300000000
 
 #define ESP_INTR_FLAG_DEFAULT 0
 
-static xQueueHandle gpio_evt_motion_queue = NULL;
+static xQueueHandle timer_evt_send_queue = NULL;
 
-static void IRAM_ATTR gpio_isr_handler(void* arg) {
 
+static bool IRAM_ATTR timer_group_isr_callback(void * arg) {
     uint32_t gpio_num = (uint32_t) arg;
-    xQueueSendFromISR(gpio_evt_motion_queue, &gpio_num, NULL);
-
+    xQueueSendFromISR(timer_evt_send_queue, &gpio_num, NULL);
+    return true;
 }
 
-static void gpio_camera_task(void* arg) {
-
-    uint32_t io_num;
-    for(;;) {
-        if ( xQueueReceive(gpio_evt_motion_queue, &io_num, portMAX_DELAY) ) {
-            //POSTAVI NEKI PIN CAMERA_OUTPUT_GPIO NA VISOK NIVO
-            //STAVI KAMERI DO ZNANJA DA FOTOGRAFISE
-            printf("Kamero, ukljuci se\n");
-            vTaskDelay(pdMS_TO_TICKS(100));
-        }
-    }
-
-}
+static int alarm_activation_num = 0;
 
 void ultrasonic_task(void *pvParameters) {
 
@@ -65,8 +61,11 @@ void ultrasonic_task(void *pvParameters) {
 
     ultrasonic_init(&sensor);
     buzzer_init(&buzzer);
+
+    bool last_state = 0; //0 = buzzer off, 1 = buzzer on
     
     while (true) {
+
         float distance;
         esp_err_t res = ultrasonic_measure(&sensor, MAX_DISTANCE_CM, &distance);
         if ( res != ESP_OK ) {
@@ -90,68 +89,95 @@ void ultrasonic_task(void *pvParameters) {
             printf("Distance: %0.04f m \n", distance);
             if (distance < 0.3) {
                 buzzer_set(&buzzer, BUZZER_ON);
+                if ( !last_state ) {
+                    ++alarm_activation_num;
+                }
+                last_state = 1;
             }
             else {
                 buzzer_set(&buzzer, BUZZER_OFF);
+                last_state = 0;
             }
         }
 
         vTaskDelay(pdMS_TO_TICKS(1500));
+
+    }
+
+}
+
+void timer_task(void *pvParameters) {
+
+    //timer config
+    timer_config_t config = {
+        .divider = TIMER_DIVIDER,
+        .counter_dir = TIMER_COUNT_UP,
+        .counter_en = TIMER_PAUSE,
+        .alarm_en = TIMER_ALARM_EN,
+        .auto_reload = TIMER_AUTORELOAD_EN
+    };
+    //bmp280 sensor config
+    i2c_config_t i2c_cfg = {
+        .mode = I2C_MODE_MASTER,
+        .sda_io_num = BMP280_SDA_GPIO,
+        .scl_io_num = BMP280_SCL_GPIO,
+        .sda_pullup_en = false,
+        .scl_pullup_en = false,
+
+        .master = {
+            .clk_speed = 100000
+        }
+    };
+    //timer init
+    timer_init(TIMER_GROUP_0, TIMER_0, &config);
+    timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);
+    timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, DELAY_1_MIN);
+    timer_enable_intr(TIMER_GROUP_0, TIMER_0);
+    timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, timer_group_isr_callback, NULL, 0);
+    timer_start(TIMER_GROUP_0, TIMER_0);
+
+    //bmp280 init
+    ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &i2c_cfg));
+    ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0));
+
+    bmx280_t* bmx280 = bmx280_create(I2C_NUM_0);
+
+    if (!bmx280) { 
+        ESP_LOGE("test", "Could not create bmx280 driver.");
+        return;
+    }
+
+    ESP_ERROR_CHECK(bmx280_init(bmx280));
+
+    bmx280_config_t bmx_cfg = BMX280_DEFAULT_CONFIG;
+    ESP_ERROR_CHECK(bmx280_configure(bmx280, &bmx_cfg));
+    uint32_t io_num;
+    while (true) {
+
+        if ( xQueueReceive(timer_evt_send_queue, &io_num, portMAX_DELAY) ) {
+            
+            ESP_ERROR_CHECK(bmx280_setMode(bmx280, BMX280_MODE_FORCE));
+            do {
+                vTaskDelay(pdMS_TO_TICKS(1));
+            } while(bmx280_isSampling(bmx280));
+
+            float temp = 0, pres = 0, hum = 0;
+            ESP_ERROR_CHECK(bmx280_readoutFloat(bmx280, &temp, &pres, &hum));
+
+            ESP_LOGI("test", "Read Values: temp = %f, pres = %f", temp, pres);
+
+            post_rest_function(temp, pres, alarm_activation_num);
+
+            vTaskDelay(pdMS_TO_TICKS(100));
+        }
+
     }
 }
 
-/*void motion_task(void *pvParameters) {
-
-    motion_t motion = {
-        .motion_pin = MOTION_GPIO
-    };
-    motion_init(&motion);
-
-    while (true) {
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-
-}*/
-
 void app_main(void) {
    
-    //zero-initialize the config structure.
-    gpio_config_t io_conf = {};
-    //disable interrupt
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    //set as output mode
-    io_conf.mode = GPIO_MODE_OUTPUT;
-    //bit mask of the pins that you want to set 
-    io_conf.pin_bit_mask = CAMERA_OUTPUT_PIN_SEL;
-    //disable pull-down mode
-    io_conf.pull_down_en = 0;
-    //disable pull-up mode
-    io_conf.pull_up_en = 0;
-    //configure GPIO with the given settings
-    gpio_config(&io_conf);
-
-    //interrupt of rising edge
-    io_conf.intr_type = GPIO_INTR_POSEDGE;
-    //bit mask of the pins
-    io_conf.pin_bit_mask = MOTION_INPUT_PIN_SEL;
-    //set as input mode
-    io_conf.mode = GPIO_MODE_INPUT;
-    //enable pull-up mode
-    io_conf.pull_up_en = 1;
-    gpio_config(&io_conf);
-
-    //create a queue to handle gpio event from isr
-    gpio_evt_motion_queue = xQueueCreate(10, sizeof(uint32_t));
-    
-    //create tasks
-    //xTaskCreate(ultrasonic_task, "ultrasonic_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    xTaskCreate(gpio_camera_task, "gpio_camera_task", configMINIMAL_STACK_SIZE * 3, NULL, 10, NULL);
-
-    //install gpio isr service
-    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-    //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(MOTION_GPIO, gpio_isr_handler, (void*) MOTION_GPIO);
+    //create a queue to handle timer event from isr
+    timer_evt_send_queue = xQueueCreate(10, sizeof(uint32_t));
 
     //wifi module
     esp_err_t ret_wifi = nvs_flash_init();
@@ -163,6 +189,11 @@ void app_main(void) {
 
     wifi_init();
     time_init();
-    //post_rest_function();
-    websocket_app_start();
+    
+    //create tasks
+    xTaskCreate(ultrasonic_task, "ultrasonic_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+    xTaskCreate(timer_task, "timer_task", configMINIMAL_STACK_SIZE * 3, NULL, 10, NULL);
+
+    //websocket_app_start();
 }
+

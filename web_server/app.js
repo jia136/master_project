@@ -77,6 +77,16 @@ app.post('/ESPdata', async (req, res) => {
   res.sendStatus(201);
 });*/
 
+app.post('/sensor', async (req, res) => {
+  const { temp, pres, alarm } = req.body
+  console.log(temp);
+  console.log(pres);
+  console.log(alarm);
+  //const sensor_data = await createEspData(title, value)
+  //res.status(201).send(sensor_data)
+  res.sendStatus(201);
+});
+
 app.post('/test', async(req, res) => {
 
   req.pipe(fs.createWriteStream('./images/image_' + app.locals.imageNum + '.jpg' ))
