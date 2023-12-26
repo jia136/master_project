@@ -47,7 +47,10 @@ app.use('/users', usersRouter);
 
 const wss = new WebSocketServer({ port: 5000 });
 
-app.locals.temperatura = "123";
+app.locals.temperature= "[no data]";
+app.locals.pressure= "[no data]";
+app.locals.alarm= "[no data]";
+
 app.locals.imageNum = 0;
 
 //MySQL ESP all inforamtion
@@ -69,6 +72,10 @@ app.post('/ESPdata', async (req, res) => {
   res.status(201).send(sensor_data)
 });
 
+app.get('/getSensor', async (req, res) => {
+
+});
+
 /*app.post('/temperature', async (req, res) => {
   //var temp_val = { temp: req.body.temp }
   //console.log(temp_val)
@@ -82,8 +89,9 @@ app.post('/sensor', async (req, res) => {
   console.log(temp);
   console.log(pres);
   console.log(alarm);
-  //const sensor_data = await createEspData(title, value)
-  //res.status(201).send(sensor_data)
+  app.locals.temperature = temp;
+  app.locals.pressure = pres;
+  app.locals.alarm = alarm;
   res.sendStatus(201);
 });
 

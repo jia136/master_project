@@ -4,23 +4,22 @@ block content
   .header
     h1= title
   .navbar
-    a(href='#') Sensors
-    a(href='#') Security
-    a(href='#') Log file
-    a.right(href='#') About project
+    p 
   .row
     .side
       h2 ESP32 sensors
-      ul 
-        li Temperature
-          p#paraIDtemp= temp_value
-        li Pressure
-          p#paraIDpres [no data]
-        li Humidity
-          p#paraIDhumi [no data]
+        h3#h3Sensor Temperature
+          .containerTemp
+            img(src='images/temp.png' alt='temperature' style='width: 100px; height: 100px; object-fit: contain;opacity: 0.18;')
+            .centered= temperature + " °C"
+        h3#h3Sensor Pressure
+          .containerPres
+            img(src='images/pressure.png' alt='pressure' style='width: 100px; height: 100px; object-fit: contain;opacity: 0.18;')
+            .centered= pressure + " Pa"
     .main
-      h2 ESP security
-        h3 Movement          
+      h2 ESP32 security
+        h3 Movement
+          p#moveIDpres= "Alarm was activated " + alarm + " times."         
         h3 Camera
         .container
           .card
@@ -38,8 +37,7 @@ block content
                     th
                       | Created
                 tbody
-              img#image  
-
+              img#image
       h2 ESP32 log file
       button.button.button1#btn1ID Show log file
       .scrollbox        

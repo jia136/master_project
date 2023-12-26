@@ -1,6 +1,7 @@
 const btn1 = document.getElementById('btn1ID');
 const btn2 = document.getElementById('btn2ID');
 
+
 const imageHandler1 = async () => {
 
     console.log("imageHandler1");
@@ -134,3 +135,4 @@ function loadTable(data) {
 btn1.addEventListener('click', clickHandler1);
 btn2.addEventListener('click', clickHandler2);
 document.addEventListener('DOMContentLoaded', imageHandler1);
+//document.addEventListener('DOMContentLoaded', sensorHandler1);
