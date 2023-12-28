@@ -18,6 +18,7 @@
 #include "esp_time.h"
 #include "esp_web.h"
 #include "socket.h"
+#include "esp_logging.h"
 
 #define MAX_DISTANCE_CM 500 // 5m max distance for ultrasonic sensor
 
@@ -163,7 +164,7 @@ void timer_task(void *pvParameters) {
 
             float temp = 0, pres = 0, hum = 0;
             ESP_ERROR_CHECK(bmx280_readoutFloat(bmx280, &temp, &pres, &hum));
-
+            //bmp280 doesn't have hum sensor..
             ESP_LOGI("test", "Read Values: temp = %f, pres = %f", temp, pres);
 
             post_rest_function(temp, pres, alarm_activation_num);
@@ -178,7 +179,7 @@ void app_main(void) {
    
     //create a queue to handle timer event from isr
     timer_evt_send_queue = xQueueCreate(10, sizeof(uint32_t));
-
+    
     //wifi module
     esp_err_t ret_wifi = nvs_flash_init();
     if (ret_wifi == ESP_ERR_NVS_NO_FREE_PAGES || ret_wifi == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -187,13 +188,13 @@ void app_main(void) {
     }
     ESP_ERROR_CHECK(ret_wifi);
 
+    log_init();
     wifi_init();
     time_init();
-    
+    LOGE_0(3, 0X45);
     //create tasks
-    xTaskCreate(ultrasonic_task, "ultrasonic_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+    //xTaskCreate(ultrasonic_task, "ultrasonic_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
     xTaskCreate(timer_task, "timer_task", configMINIMAL_STACK_SIZE * 3, NULL, 10, NULL);
 
-    //websocket_app_start();
 }
 

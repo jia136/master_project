@@ -13,7 +13,7 @@ import logger from 'morgan'
 import indexRouter from './routes/index.js'
 import usersRouter from './routes/users.js'
 
-import WebSocket from 'ws'
+import { WebSocket } from 'ws'
 import { WebSocketServer } from 'ws';
 //import multer from 'multer'
 import fs from 'fs'
@@ -50,6 +50,8 @@ const wss = new WebSocketServer({ port: 5000 });
 app.locals.temperature= "[no data]";
 app.locals.pressure= "[no data]";
 app.locals.alarm= "[no data]";
+app.locals.log_level_esp="3"; //INFO - log level
+app.locals.cap_level_esp="3"; //1024 bytes - cap level
 
 app.locals.imageNum = 0;
 
@@ -121,23 +123,28 @@ app.post('/clicked', async (req, res) => {
 
 app.post('/loglevel', async (req, res) => {
   var log_level = { esp_log_level: req.body.esp_log_level }
-  res.status(201).send(log_level)
+  app.locals.log_level_esp = log_level.esp_log_level;
+  console.log(app.locals.log_level_esp);
+  res.status(201).send(log_level);
+});
+
+app.post('/caplevel', async (req, res) => {
+  var cap_level = { esp_cap_level: req.body.esp_cap_level }
+  app.locals.cap_level_esp = cap_level.esp_cap_level;
+  console.log(app.locals.cap_level_esp);
+  res.status(201).send(cap_level);
 });
 
 wss.on('connection', function connection(ws) {
   console.log('A new client Connected!');
-  ws.send('Welcome New Client!');
 
   ws.on('message', function incoming(message) {
-    console.log('received: %s', message);
+    console.log('received: %s', message); //ovde dobijam log poruku, ovo se parsira i posle salje u bazu podataka
 
-    wss.clients.forEach(function each(client) {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-    
+    ws.send(`L${app.locals.log_level_esp}`);
+    ws.send(`C${app.locals.cap_level_esp}`);
   });
+
 });
 
 app.post('/getImage' , async (req, res) => {

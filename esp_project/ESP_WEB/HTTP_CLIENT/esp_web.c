@@ -32,7 +32,6 @@ void post_rest_function(float temp, float pres, int alarm_activation) {
     esp_http_client_handle_t client = esp_http_client_init(&config_post);
     char buf[100];
     snprintf(buf, 100, "{\"temp\":\"%.2f\", \"pres\":\"%.2f\",\"alarm\":\"%d\"}", temp, pres, alarm_activation);
-    //char  *post_data = "{\"temp\":\"21.5\"}";
     char  *post_data = buf;
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
     esp_http_client_set_header(client, "Content-Type", "application/json");

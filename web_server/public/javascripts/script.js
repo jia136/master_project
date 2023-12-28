@@ -1,6 +1,6 @@
 const btn1 = document.getElementById('btn1ID');
 const btn2 = document.getElementById('btn2ID');
-
+const btn3 = document.getElementById('btn3ID');
 
 const imageHandler1 = async () => {
 
@@ -50,6 +50,34 @@ const clickHandler2 = async () => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ esp_log_level: output })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            console.log('OK!');
+            
+            console.log(data);
+            return;    
+        }
+        throw new Error('Request faild.');
+    } catch (error) {
+        console.log(error);    
+    }
+
+};
+
+
+const clickHandler3 = async () => {
+
+    console.log('button3 was clicked');
+    const selectElement = document.getElementById('cap_level');
+    const output = selectElement.value;
+    try {
+        const res = await fetch('/caplevel', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ esp_cap_level: output })
         });
         const data = await res.json();
         if (res.ok) {
@@ -134,5 +162,6 @@ function loadTable(data) {
 
 btn1.addEventListener('click', clickHandler1);
 btn2.addEventListener('click', clickHandler2);
+btn3.addEventListener('click', clickHandler3);
 document.addEventListener('DOMContentLoaded', imageHandler1);
 //document.addEventListener('DOMContentLoaded', sensorHandler1);

@@ -3,7 +3,7 @@ extends layout
 block content
   .header
     h1= title
-  .navbar
+  //.navbar
     p 
   .row
     .side
@@ -41,14 +41,26 @@ block content
       h2 ESP32 log file
       button.button.button1#btn1ID Show log file
       .scrollbox        
-        p#paraID ...
+        p#paraID 
       .menu
-        label(for='log_level') Choose log level: 
-        select#log_level
-          option(value=' error ') Error
-          option(value=' debug ') Debug
-          option(value=' info ') Info
-        button.button.button2#btn2ID Change log level
+        .menu1
+          label(for='log_level') Choose log level:  
+          select#log_level
+            option(value='0') None
+            option(value='1') Error
+            option(value='2') Warning
+            option(value='3') Info
+            option(value='4') Debug
+            option(value='5') Verbose
+          button.button.button2#btn2ID Change log level
+        .menu2
+          label(for='cap_level') Choose capacity level: 
+          select#cap_level
+            option(value='0') 128 bytes
+            option(value='1') 256 bytes
+            option(value='2') 512 bytes
+            option(value='3') 1024 bytes
+          button.button.button2#btn3ID Change capacity level
   .footer
     p Author: Jelena Marinkovic FTN Novi Sad Serbia
     p december 2023
