@@ -17,8 +17,7 @@ def send_data_to_db():
     with open(csv_path, "r") as csv_reader:
         csv_reader = csv.reader(csv_reader)
         for rows in csv_reader:
-            dict_list.append({'log_level': rows[0], 'module': rows[1], 'message': rows[2], 'arg0': rows[3]})
-            dict_list.append({'arg1': rows[4], 'arg2': rows[5]})
+            dict_list.append({'log_level': rows[0], 'module': rows[1], 'message': rows[2], 'arg0': rows[3], 'arg1': rows[4], 'arg2': rows[5]})
 
     mydatabase = mysql.connector.connect(
         username='root',
@@ -51,9 +50,10 @@ def parse_log(log_to_parse):
             msg_id = one_log[0]
             log_level = str(verbosity_string.get(one_log[1] & 0x07))
             module_name = str(module_string.get((one_log[1] & 0xF8) >> 3))
-            all_args = ""
+            all_args = ","
+            no_of_arg = 0
             if one_log[2] != 59:
-                del one_log[0:2]
+                del one_log[0:3]
                 arg = ""
                 for arg_char in one_log:
                     if arg_char != 58 and arg_char != 59:
@@ -62,6 +62,16 @@ def parse_log(log_to_parse):
                         all_args += arg
                         all_args += ","
                         arg = ""
+                        no_of_arg = no_of_arg + 1
+
+            # need to fill null data for MySQL table data
+            if no_of_arg == 0:
+                all_args = ",-,-,-,"
+            elif no_of_arg == 1:
+                all_args += "-,-,"
+            elif no_of_arg == 2:
+                all_args += "-,"
+
             del one_log[:]
             msg_string = ""
             try:
@@ -103,6 +113,5 @@ def read_log_file(file_name):
 
 if __name__ == '__main__':
     print('Hello from python')
-    # log_file_name = "C:\\Users\\Jelena\\Desktop\\web_server\\python_decoder\\log_from_esp.txt"
-    log_file_name = "C:\\Users\\Jelena\\Desktop\\test_fajl.txt"
+    log_file_name = "C:\\Users\\Jelena\\Desktop\\web_server\\python_decoder\\log_from_esp.txt"
     read_log_file(log_file_name)
