@@ -18,6 +18,7 @@ import { WebSocketServer } from 'ws';
 //import multer from 'multer'
 import fs from 'fs'
 import bodyParser from 'body-parser';
+import { spawn } from 'child_process';
 
 // Allow assets directory listings
 import serveIndex from 'serve-index'; 
@@ -139,10 +140,27 @@ wss.on('connection', function connection(ws) {
   console.log('A new client Connected!');
 
   ws.on('message', function incoming(message) {
+
     console.log('received: %s', message); //ovde dobijam log poruku, ovo se parsira i posle salje u bazu podataka
 
     ws.send(`L${app.locals.log_level_esp}`);
     ws.send(`C${app.locals.cap_level_esp}`);
+
+    fs.writeFile('./python_decoder/log_from_esp.txt', message, (err) => { if (err) throw err; });
+    
+    var dataToSend;
+    const python = spawn('python', ['./python_decoder/script1.py']);
+
+    python.stdout.on('data', function (data) {
+      console.log('Pipe data from python script ...');
+      dataToSend = data.toString();
+    });
+
+    python.on('close', (code) => {
+      console.log(`child process close all stdio with code ${code}`);
+      console.log(dataToSend);
+    });
+
   });
 
 });

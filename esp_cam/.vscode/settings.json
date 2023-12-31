@@ -4,6 +4,12 @@
   "idf.adapterTargetName": "esp32",
   "idf.flashType": "UART",
   "files.associations": {
-    "freertos.h": "c"
+    "freertos.h": "c",
+    "*.inc": "c",
+    "sdkconfig.h": "c",
+    "event_groups.h": "c",
+    "esp_timer.h": "c",
+    "esp_logging.h": "c",
+    "esp_camera.h": "c"
   }
 }

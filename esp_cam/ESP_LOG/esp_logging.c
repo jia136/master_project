@@ -4,9 +4,9 @@
 
 #define MAX_TEMP_BUFF 100
 
-static int16_t current_log_level = 8;       //debug level
-static int16_t current_log_capacity = 1024; //in bytes
-int16_t log_capacity = 1024;                //in bytes
+static int16_t current_log_level = 5;       //debug level
+static int16_t current_log_capacity = 128;  //in bytes
+int16_t log_capacity = 128;                 //in bytes
 
 char data_buff[BUFFER_SIZE];
 
@@ -100,14 +100,15 @@ void log_msg_0( log_level_t log_level, uint16_t ui16_module, uint16_t ui16_id ) 
 
         log_vmi(temp_buff, ui16_vmi_packed, &ui8_log_size);
         log_msg_end(temp_buff, &ui8_log_size);
-        buffer_write_log(data_buff, temp_buff, ui8_log_size);
-        websocket_app_start(data_buff, log_capacity);
-        void log_init();
-        /*if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
+        //buffer_write_log(data_buff, temp_buff, ui8_log_size);
+        //websocket_app_start(data_buff, log_capacity);
+        //void log_init();
+        if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
             //BAFER JE PUN, TREBA SLATI PODATKE
             websocket_app_start(data_buff, log_capacity);
             void log_init();
-        }*/
+        }
+
     }
 
 }

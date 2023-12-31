@@ -28,7 +28,19 @@ const clickHandler1 = async () => {
         const res = await fetch('/clicked', {method: 'POST'});
         const data = await res.json();
         if (res.ok) {
-            document.getElementById('paraID').innerHTML = JSON.stringify(data);
+            let data_print = [];
+            //document.getElementById('paraID').innerHTML = JSON.stringify(data);
+            for (let i = 0; i < data.length; i++) {
+                data_print[i] = "";
+                data_print[i] += data[i]["log_level"].toString() + " ";
+                data_print[i] += data[i]["module"].toString() + " ";
+                data_print[i] += data[i]["message"].toString() + " ";
+                data_print[i] += data[i]["arg0"].toString() + " ";
+                data_print[i] += data[i]["arg1"].toString() + " ";
+                data_print[i] += data[i]["arg2"].toString() + " ";
+                data_print[i] += "<br>";
+            }
+            document.getElementById('paraID').innerHTML = data_print.join("");
             return;    
         }
         throw new Error('Request faild.');
@@ -164,4 +176,3 @@ btn1.addEventListener('click', clickHandler1);
 btn2.addEventListener('click', clickHandler2);
 btn3.addEventListener('click', clickHandler3);
 document.addEventListener('DOMContentLoaded', imageHandler1);
-//document.addEventListener('DOMContentLoaded', sensorHandler1);

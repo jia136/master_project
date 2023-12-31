@@ -5,7 +5,7 @@ import pathlib
 import mysql.connector
 
 verbosity_string = {0: '[NONE]', 1: '[ERROR]', 2: '[WARNING]', 3: '[INFO] ', 4: '[DEBUG]', 5: '[VERBOSE]'}
-module_string = {0: 'module_0', 1: 'module_1', 2: 'module_2', 3: 'module_3'}
+module_string = {0: 'esp_cam', 1: 'module_1', 2: 'module_2', 3: 'module_3'}
 
 
 def send_data_to_db():
@@ -64,7 +64,7 @@ def parse_log(log_to_parse):
                         arg = ""
                         no_of_arg = no_of_arg + 1
 
-            # need to fill null data for MySQL table data
+            # need to fill null data for MySQL table
             if no_of_arg == 0:
                 all_args = ",-,-,-,"
             elif no_of_arg == 1:

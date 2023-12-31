@@ -45,19 +45,24 @@
 #define portTICK_RATE_MS portTICK_PERIOD_MS
 #endif
 
-#include "esp_camera.h"
-#include "esp_timer.h"
-#include "motion.h"
 
 #include <stdio.h>
 #include "freertos/timers.h"
 #include "freertos/event_groups.h"
 #include "esp_wifi.h"
+#include "sdkconfig.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "esp_netif.h"
 #include "esp_http_client.h"
 #include "wifi.h"
+
+#include "esp_logging.h"
+
+#include "esp_camera.h"
+#include "esp_timer.h"
+#include "motion.h"
+#include "socket.h"
 
 // WROVER-KIT PIN Map
 #ifdef BOARD_WROVER_KIT
@@ -105,7 +110,7 @@
 
 #endif
 
-static const char *TAG = "example:take_picture";
+#define MODULE_TAG 0 //esp_cam module
 
 #define MOTION_GPIO             13
 #define MOTION_INPUT_PIN_SEL    (1ULL << MOTION_GPIO)
@@ -159,13 +164,13 @@ static esp_err_t init_camera(void) {
     esp_err_t err = esp_camera_init(&camera_config);
     if (err != ESP_OK)
     {
-        ESP_LOGE(TAG, "Camera Init Failed");
+        //ESP_LOGE(TAG, "Camera Init Failed");
+        LOGE_0(MODULE_TAG, 0x01);
         return err;
     }
 
     return ESP_OK;
 }
-
 
 esp_err_t client_event_post_handler(esp_http_client_event_handle_t evt) {
     switch (evt->event_id) {
@@ -191,10 +196,12 @@ void post_rest_function() {
     fb = esp_camera_fb_get();
 
     if (!fb) {
-        ESP_LOGE(TAG, "Camera capture failed");
+        //ESP_LOGE(TAG, "Camera capture failed");
+        LOGE_0(MODULE_TAG, 0x02);
     }
     else {
         if  (fb->format == PIXFORMAT_JPEG) {
+            LOGV_0(MODULE_TAG, 0x04);
             esp_http_client_handle_t client = esp_http_client_init(&config_post);
             esp_http_client_set_header(client, "Content-Type", "image/jpeg");
             esp_http_client_set_header(client, "Content-Length", (const char *)fb->buf);
@@ -205,13 +212,15 @@ void post_rest_function() {
             esp_http_client_cleanup(client);
         } 
         else {
-             ESP_LOGI(TAG, "chank ....");
+             LOGV_0(MODULE_TAG, 0x05);
              bool jpeg_converted = frame2jpg(fb, 80, &fb_buf, &fb_len);
              if(!jpeg_converted){
-                ESP_LOGE(TAG, "JPEG compression failed");
+                //ESP_LOGE(TAG, "JPEG compression failed");
+                LOGE_0(MODULE_TAG, 0x03);
                 esp_camera_fb_return(fb);
             }
             else {
+                LOGV_0(MODULE_TAG, 0x06);
                 esp_http_client_handle_t client = esp_http_client_init(&config_post);
                 esp_http_client_set_header(client, "Content-Type", "image/jpeg");
                 esp_http_client_set_header(client, "Content-Length", (const char *)fb_buf);
@@ -220,7 +229,6 @@ void post_rest_function() {
 
                 esp_http_client_perform(client);
                 esp_http_client_cleanup(client);
-                ESP_LOGI(TAG, "xo xo xo");
             }
             
         }
@@ -240,7 +248,8 @@ static void gpio_camera_task(void* arg) {
     for(;;) {
         if ( xQueueReceive(gpio_evt_motion_queue, &io_num, portMAX_DELAY) ) {
             post_rest_function();
-            ESP_LOGI(TAG, "Motion detected");
+            //ESP_LOGI(TAG, "Motion detected");
+            LOGI_0(MODULE_TAG, 0x07);
             //vTaskDelay(pdMS_TO_TICKS(1000));
         }
     }
@@ -248,11 +257,24 @@ static void gpio_camera_task(void* arg) {
 }
 
 void app_main(void) {
-    
+
+    //wifi module
+    esp_err_t ret_wifi = nvs_flash_init();
+    if (ret_wifi == ESP_ERR_NVS_NO_FREE_PAGES || ret_wifi == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret_wifi = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret_wifi);
+
+    log_init();
+    wifi_init();
+
 #if ESP_CAMERA_SUPPORTED
+    LOGV_0(MODULE_TAG, 0x0a);
     if(ESP_OK != init_camera()) {
         return;
     }
+    LOGD_0(MODULE_TAG, 0x09);
     //zero-initialize the config structure.
     gpio_config_t io_conf = {};
     //interrupt of rising edge
@@ -276,17 +298,10 @@ void app_main(void) {
     //hook isr handler for specific gpio pin
     gpio_isr_handler_add(MOTION_GPIO, gpio_isr_handler, (void*) MOTION_GPIO);
 
-    //wifi module
-    esp_err_t ret_wifi = nvs_flash_init();
-    if (ret_wifi == ESP_ERR_NVS_NO_FREE_PAGES || ret_wifi == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret_wifi = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret_wifi);
-
-    wifi_init();
+    
 #else
-    ESP_LOGE(TAG, "Camera support is not available for this chip");
+    //ESP_LOGE(TAG, "Camera support is not available for this chip");
+    LOGE_0(MODULE_TAG, 0x08);
     return;
 #endif
 
