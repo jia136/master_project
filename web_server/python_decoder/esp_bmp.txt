@@ -1,0 +1,6 @@
+{"0": "Dumping calibration...",
+"1": "Read High Bank.",
+"2": "Read Low Bank.",
+"3": "Reading out calibration values...",
+"4": "Sensor not found.",
+"5": "Probing for BMP280/BME280 sensors on I2C ?"}

@@ -122,7 +122,7 @@ void websocket_app_start(const char * log_data, int16_t log_capacity)
    
     if (esp_websocket_client_is_connected(client)) {
 
-        int res = esp_websocket_client_send_text(client, log_data, 3, portMAX_DELAY);
+        int res = esp_websocket_client_send_text(client, log_data, log_capacity, portMAX_DELAY);
         ESP_LOGI(TAG, "Response =  %d...", res);
 
     }

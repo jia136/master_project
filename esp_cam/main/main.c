@@ -51,14 +51,13 @@
 #include "freertos/event_groups.h"
 #include "esp_wifi.h"
 #include "sdkconfig.h"
-#include "esp_log.h"
 #include "nvs_flash.h"
 #include "esp_netif.h"
 #include "esp_http_client.h"
 #include "wifi.h"
 
 #include "esp_logging.h"
-
+#include "esp_time.h"
 #include "esp_camera.h"
 #include "esp_timer.h"
 #include "motion.h"
@@ -109,7 +108,6 @@
 #define CAM_PIN_PCLK 22
 
 #endif
-
 #define MODULE_TAG 0 //esp_cam module
 
 #define MOTION_GPIO             13
@@ -164,7 +162,6 @@ static esp_err_t init_camera(void) {
     esp_err_t err = esp_camera_init(&camera_config);
     if (err != ESP_OK)
     {
-        //ESP_LOGE(TAG, "Camera Init Failed");
         LOGE_0(MODULE_TAG, 0x01);
         return err;
     }
@@ -196,7 +193,6 @@ void post_rest_function() {
     fb = esp_camera_fb_get();
 
     if (!fb) {
-        //ESP_LOGE(TAG, "Camera capture failed");
         LOGE_0(MODULE_TAG, 0x02);
     }
     else {
@@ -215,7 +211,6 @@ void post_rest_function() {
              LOGV_0(MODULE_TAG, 0x05);
              bool jpeg_converted = frame2jpg(fb, 80, &fb_buf, &fb_len);
              if(!jpeg_converted){
-                //ESP_LOGE(TAG, "JPEG compression failed");
                 LOGE_0(MODULE_TAG, 0x03);
                 esp_camera_fb_return(fb);
             }
@@ -248,9 +243,8 @@ static void gpio_camera_task(void* arg) {
     for(;;) {
         if ( xQueueReceive(gpio_evt_motion_queue, &io_num, portMAX_DELAY) ) {
             post_rest_function();
-            //ESP_LOGI(TAG, "Motion detected");
             LOGI_0(MODULE_TAG, 0x07);
-            //vTaskDelay(pdMS_TO_TICKS(1000));
+            vTaskDelay(pdMS_TO_TICKS(100));
         }
     }
 
@@ -268,6 +262,8 @@ void app_main(void) {
 
     log_init();
     wifi_init();
+    time_init();
+
 
 #if ESP_CAMERA_SUPPORTED
     LOGV_0(MODULE_TAG, 0x0a);
@@ -300,7 +296,6 @@ void app_main(void) {
 
     
 #else
-    //ESP_LOGE(TAG, "Camera support is not available for this chip");
     LOGE_0(MODULE_TAG, 0x08);
     return;
 #endif

@@ -1,0 +1,6 @@
+{"0": "Connect to the AP fail", 
+"1": "Retry to connect to the AP", 
+"2": "Wifi init finished",
+"3": "Connected to ap SSID:? password:?",
+"4": "Failed to connect to SSID:?, password:?",
+"5": "Unexpected event"}

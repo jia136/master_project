@@ -55,7 +55,7 @@ int32_t buffer_write_log(char data_buff[BUFFER_SIZE], int8_t temp_buff[MAX_TEMP_
 
     return b_ret_value;
 
- }
+}
 
 
 int32_t buffer_read(char data_buff[BUFFER_SIZE], int8_t* pui8_data) {

@@ -14,12 +14,13 @@
 // "// END OF DRAGONS" contains modified versions of code owned by Bosch 
 // Sensortec GmbH and it is not clearly licensed, therefore this code is not 
 // covered by the MIT of this repository. Use at your own risk.
-
-#include "esp_log.h"
+#include "esp_logging.h"
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+
+#define MODULE_TAG 4
 
 // [BME280] Register address of humidity least significant byte.
 #define BMX280_REG_HUMI_LSB 0xFE
@@ -203,7 +204,6 @@ static esp_err_t bmx280_probe_address(bmx280_t *bmx280)
         #endif
         )
         {
-            ESP_LOGI("bmx280", "Probe success: address=%hhx, id=%hhx", bmx280->slave, bmx280->chip_id);
            return ESP_OK;
         }
         else
@@ -212,14 +212,14 @@ static esp_err_t bmx280_probe_address(bmx280_t *bmx280)
         }
     }
 
-    ESP_LOGW("bmx280", "Probe failure: address=%hhx, id=%hhx, reason=%s", bmx280->slave, bmx280->chip_id, esp_err_to_name(err));
     return err;
 }
 
 static esp_err_t bmx280_probe(bmx280_t *bmx280)
 {
-    ESP_LOGI("bmx280", "Probing for BMP280/BME280 sensors on I2C %d", bmx280->i2c_port);
-
+    char buf[16];
+    snprintf(buf, 16, "%d", bmx280->i2c_port);
+    LOGI_1(MODULE_TAG, 0x05, &buf);
     #if CONFIG_BMX280_ADDRESS_HI
     bmx280->slave = 0xEE;
     return bmx280_probe_address(bmx280);
@@ -234,7 +234,7 @@ static esp_err_t bmx280_probe(bmx280_t *bmx280)
         bmx280->slave = 0xEE;
         if ((err = bmx280_probe_address(bmx280)) != ESP_OK)
         {
-            ESP_LOGE("bmx280", "Sensor not found.");
+            LOGE_0(MODULE_TAG, 0x04);
             bmx280->slave = 0xDE;
             bmx280->chip_id = 0xAD;
         }
@@ -258,7 +258,7 @@ static esp_err_t bmx280_calibrate(bmx280_t *bmx280)
     //
     // Write and pray to optimizations is my new motto.
 
-    ESP_LOGI("bmx280", "Reading out calibration values...");
+    LOGI_0(MODULE_TAG, 0x03);
 
     esp_err_t err;
     uint8_t buf[26];
@@ -268,7 +268,7 @@ static esp_err_t bmx280_calibrate(bmx280_t *bmx280)
 
     if (err != ESP_OK) return err;
 
-    ESP_LOGI("bmx280", "Read Low Bank.");
+    LOGI_0(MODULE_TAG, 0x02);
 
     bmx280->cmps.T1 = buf[0] | (buf[1] << 8);
     bmx280->cmps.T2 = buf[2] | (buf[3] << 8);
@@ -296,7 +296,7 @@ static esp_err_t bmx280_calibrate(bmx280_t *bmx280)
 
         if (err != ESP_OK) return err;
 
-        ESP_LOGI("bmx280", "Read High Bank.");
+        LOGI_0(MODULE_TAG, 0x01);
 
         bmx280->cmps.H2 = buf[0] | (buf[1] << 8);
         bmx280->cmps.H3 = buf[2];
@@ -343,8 +343,7 @@ esp_err_t bmx280_init(bmx280_t* bmx280)
         // Read calibration data.
         bmx280_calibrate(bmx280);
 
-        ESP_LOGI("bmx280", "Dumping calibration...");
-        //ESP_LOG_BUFFER_HEX("bmx280", &bmx280->cmps, sizeof(bmx280->cmps));
+        LOGI_0(MODULE_TAG, 0x00);
     }
 
     return error;

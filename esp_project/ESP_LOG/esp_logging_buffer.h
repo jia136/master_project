@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 #define MAX_TEMP_BUFF 100
 
 struct buffer {

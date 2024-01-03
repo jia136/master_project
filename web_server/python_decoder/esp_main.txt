@@ -1,0 +1,13 @@
+{"0": "Cannot ping (device is in invalid state)", 
+"1": "Ping timeout (no device found)", 
+"2": "Echo timeout (i.e. distance too big)",
+"3": "Buzzer is off",
+"4": "Ultrasonic measure error ?",
+"5": "Ultrasonic measure response ?",
+"6": "Ultrasonic distance: ? m ",
+"7": "Distance violation",
+"8": "Buzzer is on",
+"9": "Could not create BMP280 driver",
+"10": "BMP280 driver is created",
+"11": "Read Values: temp = ?, pres = ?",
+"12": "Buzzer number of activations = ?"}

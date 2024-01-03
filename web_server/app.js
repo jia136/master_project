@@ -51,7 +51,7 @@ const wss = new WebSocketServer({ port: 5000 });
 app.locals.temperature= "[no data]";
 app.locals.pressure= "[no data]";
 app.locals.alarm= "[no data]";
-app.locals.log_level_esp="3"; //INFO - log level
+app.locals.log_level_esp="2"; //WARNING - log level
 app.locals.cap_level_esp="3"; //1024 bytes - cap level
 
 app.locals.imageNum = 0;
@@ -141,7 +141,7 @@ wss.on('connection', function connection(ws) {
 
   ws.on('message', function incoming(message) {
 
-    console.log('received: %s', message); //ovde dobijam log poruku, ovo se parsira i posle salje u bazu podataka
+    //console.log('received: %s', message); //ovde dobijam log poruku, ovo se parsira i posle salje u bazu podataka
 
     ws.send(`L${app.locals.log_level_esp}`);
     ws.send(`C${app.locals.cap_level_esp}`);
@@ -151,14 +151,14 @@ wss.on('connection', function connection(ws) {
     var dataToSend;
     const python = spawn('python', ['./python_decoder/script1.py']);
 
+    /*
     python.stdout.on('data', function (data) {
-      console.log('Pipe data from python script ...');
       dataToSend = data.toString();
     });
+    */
 
     python.on('close', (code) => {
       console.log(`child process close all stdio with code ${code}`);
-      console.log(dataToSend);
     });
 
   });

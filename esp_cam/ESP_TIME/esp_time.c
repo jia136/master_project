@@ -6,12 +6,12 @@
 #include "esp_sleep.h"
 #include "esp_sntp.h"
 #include "esp_logging.h"
-
+#include "esp_log.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
 char Current_Date_Time[100];
-#define MODULE_TAG 5 //esp_time module
+#define MODULE_TAG 3 //cam_time module
 
 void time_sync_notification_cb(struct timeval *tv) {
     LOGI_0(MODULE_TAG, 0x00);
@@ -72,7 +72,7 @@ static void obtain_time(void) {
 	localtime_r(&now, &timeinfo);
 	// Is time set? If not, tm_year will be (1970 - 1900).
 	if (timeinfo.tm_year < (2016 - 1900)) {
-	    LOGI_0(MODULE_TAG, 0x03);
+        LOGI_0(MODULE_TAG, 0x03);
 	    obtain_time();
 	    // update 'now' variable with current time
 	    time(&now);

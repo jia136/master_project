@@ -16,7 +16,12 @@
     "esp_time.h": "c",
     "ip_addr.h": "c",
     "esp_sleep.h": "c",
-    "esp_sntp.h": "c"
+    "esp_sntp.h": "c",
+    "time.h": "c",
+    "esp_web.h": "c",
+    "freertos.h": "c",
+    "queue.h": "c",
+    "task.h": "c"
   },
   "idf.adapterTargetName": "esp32"
 

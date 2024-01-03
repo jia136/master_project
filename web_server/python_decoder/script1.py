@@ -5,8 +5,7 @@ import pathlib
 import mysql.connector
 
 verbosity_string = {0: '[NONE]', 1: '[ERROR]', 2: '[WARNING]', 3: '[INFO] ', 4: '[DEBUG]', 5: '[VERBOSE]'}
-module_string = {0: 'esp_cam', 1: 'module_1', 2: 'module_2', 3: 'module_3'}
-
+module_string = {0: 'cam_main', 1: 'esp_main', 2: 'cam_wifi', 3: 'cam_time', 4: 'esp_bmp', 5: 'esp_time', 6: 'esp_wifi'}
 
 def send_data_to_db():
     print('send_data_to_db')
@@ -17,7 +16,7 @@ def send_data_to_db():
     with open(csv_path, "r") as csv_reader:
         csv_reader = csv.reader(csv_reader)
         for rows in csv_reader:
-            dict_list.append({'log_level': rows[0], 'module': rows[1], 'message': rows[2], 'arg0': rows[3], 'arg1': rows[4], 'arg2': rows[5]})
+            dict_list.append({'log_time': rows[0], 'log_level': rows[1], 'module': rows[2], 'message': rows[3]})
 
     mydatabase = mysql.connector.connect(
         username='root',
@@ -29,9 +28,8 @@ def send_data_to_db():
     mycursor = mydatabase.cursor()
 
     for item in dict_list:
-        sql = "INSERT INTO esp_log_t ( log_level, module, message, arg0, arg1, arg2) VALUES (%s, %s, %s, %s, " \
-                "%s, %s )"
-        val = item['log_level'], item['module'], item['message'], item['arg0'], item['arg1'], item['arg2']
+        sql = "INSERT INTO esp_log_t (log_time, log_level, module, message ) VALUES (%s ,%s, %s, %s)"
+        val = item['log_time'], item['log_level'], item['module'], item['message']
         mycursor.execute(sql, tuple(val))
     mydatabase.commit()
     mycursor.execute('SELECT * FROM esp_log_t')
@@ -41,56 +39,53 @@ def send_data_to_db():
     mydatabase.close()
 
 
+
 def parse_log(log_to_parse):
     one_log = arr.array('i')
     print(log_to_parse)
     for one_char in log_to_parse:
         one_log.append(one_char)
         if one_char == 59:
-            msg_id = one_log[0]
-            log_level = str(verbosity_string.get(one_log[1] & 0x07))
-            module_name = str(module_string.get((one_log[1] & 0xF8) >> 3))
-            all_args = ","
-            no_of_arg = 0
-            if one_log[2] != 59:
-                del one_log[0:3]
+            time_info = ""
+            for one_time in one_log[0:18]:
+                time_info += str(chr(one_time))
+            msg_id = one_log[18]
+            log_level = str(verbosity_string.get(one_log[19] & 0x07))
+            module_name = str(module_string.get((one_log[19] & 0xF8) >> 3))
+            all_args = ["", "", ""]
+            if one_log[20] != 59:
+                del one_log[0:21]
+                i = 0
                 arg = ""
                 for arg_char in one_log:
                     if arg_char != 58 and arg_char != 59:
-                        arg += str(arg_char)
+                        arg += str(chr(arg_char))
                     else:
-                        all_args += arg
-                        all_args += ","
+                        all_args[i] = arg
+                        i = i + 1
                         arg = ""
-                        no_of_arg = no_of_arg + 1
-
-            # need to fill null data for MySQL table
-            if no_of_arg == 0:
-                all_args = ",-,-,-,"
-            elif no_of_arg == 1:
-                all_args += "-,-,"
-            elif no_of_arg == 2:
-                all_args += "-,"
 
             del one_log[:]
             msg_string = ""
             try:
-                with open(module_name + ".txt", "r") as fp:
+                with open("./python_decoder/" + module_name + ".txt", "r") as fp:
                     # Load the dictionary from the file
                     id_to_str = json.load(fp)
                     msg_string = id_to_str.get(str(msg_id))
+                    arg_nums = msg_string.count("?")
+                    for i in range(0, arg_nums):
+                        msg_string = msg_string.replace("?", all_args[i], 1)
                     fp.close()
             except FileNotFoundError as e:
                 print(e)
 
             try:
                 with open("log_parsed.csv", "a") as fp:
-                    fp.write(log_level + ',' + module_name + ',' + msg_string + all_args[:-1] + '\n')
+                    fp.write(time_info + ',' + log_level + ',' + module_name + ',' + msg_string + '\n')
                     fp.close()
-                    send_data_to_db()
+                    # send_data_to_db()
             except FileNotFoundError as e:
                 print(e)
-
 
 def read_log_file(file_name):
     print("read log file foo")

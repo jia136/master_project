@@ -1,0 +1,4 @@
+{"0": "Notification of a time synchronization event",
+"1": "Initializing SNTP",
+"2": "Waiting for system time to be set... (?/?)",
+"3": "Time is not set yet. Connecting to WiFi and getting time over NTP."}

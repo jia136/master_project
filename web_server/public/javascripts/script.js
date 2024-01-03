@@ -35,9 +35,6 @@ const clickHandler1 = async () => {
                 data_print[i] += data[i]["log_level"].toString() + " ";
                 data_print[i] += data[i]["module"].toString() + " ";
                 data_print[i] += data[i]["message"].toString() + " ";
-                data_print[i] += data[i]["arg0"].toString() + " ";
-                data_print[i] += data[i]["arg1"].toString() + " ";
-                data_print[i] += data[i]["arg2"].toString() + " ";
                 data_print[i] += "<br>";
             }
             document.getElementById('paraID').innerHTML = data_print.join("");
