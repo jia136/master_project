@@ -1,33 +1,4 @@
-/**
- * This example takes a picture every 5s and print its size on serial monitor.
- */
-
-// =============================== SETUP ======================================
-
-// 1. Board setup (Uncomment):
-// #define BOARD_WROVER_KIT
 #define BOARD_ESP32CAM_AITHINKER
-
-/**
- * 2. Kconfig setup
- *
- * If you have a Kconfig file, copy the content from
- *  https://github.com/espressif/esp32-camera/blob/master/Kconfig into it.
- * In case you haven't, copy and paste this Kconfig file inside the src directory.
- * This Kconfig file has definitions that allows more control over the camera and
- * how it will be initialized.
- */
-
-/**
- * 3. Enable PSRAM on sdkconfig:
- *
- * CONFIG_ESP32_SPIRAM_SUPPORT=y
- *
- * More info on
- * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html#config-esp32-spiram-support
- */
-
-// ================================ CODE ======================================
 
 #include <esp_log.h>
 #include <esp_system.h>
@@ -39,6 +10,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "driver/gpio.h"
+#include "freertos/portmacro.h"
 
 // support IDF 5.x
 #ifndef portTICK_RATE_MS
@@ -57,11 +29,12 @@
 #include "wifi.h"
 
 #include "esp_logging.h"
+#include "esp_log.h"
 #include "esp_time.h"
 #include "esp_camera.h"
 #include "esp_timer.h"
 #include "motion.h"
-#include "socket.h"
+
 
 // WROVER-KIT PIN Map
 #ifdef BOARD_WROVER_KIT
@@ -244,14 +217,13 @@ static void gpio_camera_task(void* arg) {
         if ( xQueueReceive(gpio_evt_motion_queue, &io_num, portMAX_DELAY) ) {
             post_rest_function();
             LOGI_0(MODULE_TAG, 0x07);
-            vTaskDelay(pdMS_TO_TICKS(100));
+            vTaskDelay(pdMS_TO_TICKS(1000));
         }
     }
 
 }
 
 void app_main(void) {
-
     //wifi module
     esp_err_t ret_wifi = nvs_flash_init();
     if (ret_wifi == ESP_ERR_NVS_NO_FREE_PAGES || ret_wifi == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -290,7 +262,7 @@ void app_main(void) {
     //create task
     xTaskCreate(gpio_camera_task, "gpio_camera_task", configMINIMAL_STACK_SIZE * 3, NULL, 10, NULL);
     //install gpio isr service
-    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+    //gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     //hook isr handler for specific gpio pin
     gpio_isr_handler_add(MOTION_GPIO, gpio_isr_handler, (void*) MOTION_GPIO);
 

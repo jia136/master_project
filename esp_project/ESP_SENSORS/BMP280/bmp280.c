@@ -251,13 +251,6 @@ static esp_err_t bmx280_reset(bmx280_t *bmx280)
 
 static esp_err_t bmx280_calibrate(bmx280_t *bmx280)
 {
-    // Honestly, the best course of action is to read the high and low banks
-    // into a buffer, then put them in the calibration values. Makes code
-    // endian agnostic, and overcomes struct packing issues.
-    // Also the BME280 high bank is weird.
-    //
-    // Write and pray to optimizations is my new motto.
-
     LOGI_0(MODULE_TAG, 0x03);
 
     esp_err_t err;

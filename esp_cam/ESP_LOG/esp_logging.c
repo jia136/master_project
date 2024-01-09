@@ -1,13 +1,18 @@
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "esp_logging.h"
 #include "esp_logging_buffer.h"
-#include "socket.h"
+
+#include "esp_web.h"
 #include <time.h>
 
 #define MAX_TEMP_BUFF 100
 
 static int16_t current_log_level = 4;       //info level is default
-static int16_t current_log_capacity = 1024; //in bytes
-int16_t log_capacity = 1024;                //in bytes
+static int16_t current_log_capacity = 256; //in bytes
+int16_t log_capacity = 256;                //in bytes
+static _lock_t bufferLock = 0;
 
 char data_buff[BUFFER_SIZE];
 
@@ -120,13 +125,14 @@ void log_msg_0( log_level_t log_level, uint16_t ui16_module, uint16_t ui16_id ) 
         log_time(temp_buff);
         log_vmi(temp_buff, ui16_vmi_packed, &ui8_log_size);
         log_msg_end(temp_buff, &ui8_log_size);
-
+        _lock_acquire(&bufferLock);
         if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
             //BAFER JE PUN, TREBA SLATI PODATKE
-            websocket_app_start(data_buff, log_capacity);
-            void log_init();
-            buffer_write_log(data_buff, temp_buff, ui8_log_size); //posalji log za koji nije bilo mesta
+            send_log_function(data_buff, log_capacity);
+            log_init();
+            buffer_write_log(data_buff, temp_buff, ui8_log_size); //upisi log za koji nije bilo mesta
         }
+        _lock_release(&bufferLock);
     }
 
 }
@@ -144,14 +150,14 @@ void log_msg_1( log_level_t log_level, uint16_t ui16_module, uint16_t ui16_id, c
         log_msg_next_arg(temp_buff, &ui8_log_size);
         log_arg(temp_buff, pui8_arg_0, &ui8_log_size);
         log_msg_end(temp_buff, &ui8_log_size);
-
+         _lock_acquire(&bufferLock);
         if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
             //BAFER JE PUN, TREBA SLATI PODATKE
-            websocket_app_start(data_buff, log_capacity);
-            void log_init();
+            send_log_function(data_buff, log_capacity);
+            log_init();
             buffer_write_log(data_buff, temp_buff, ui8_log_size); //posalji log za koji nije bilo mesta
         }
-
+        _lock_release(&bufferLock);
     }
 
 }
@@ -171,14 +177,14 @@ void log_msg_2( log_level_t log_level, uint16_t ui16_module, uint16_t ui16_id, c
         log_msg_next_arg(temp_buff, &ui8_log_size);
         log_arg(temp_buff, pui8_arg_1, &ui8_log_size);
         log_msg_end(temp_buff, &ui8_log_size);
-
+        _lock_acquire(&bufferLock);
         if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
             //BAFER JE PUN, TREBA SLATI PODATKE
-            websocket_app_start(data_buff, log_capacity);
-            void log_init();
+            send_log_function(data_buff, log_capacity);
+            log_init();
             buffer_write_log(data_buff, temp_buff, ui8_log_size); //posalji log za koji nije bilo mesta
         }
-
+        _lock_release(&bufferLock);
     }
 
 }
@@ -200,13 +206,13 @@ void log_msg_3( log_level_t log_level, uint16_t ui16_module, uint16_t ui16_id, c
         log_msg_next_arg(temp_buff, &ui8_log_size);
         log_arg(temp_buff, pui8_arg_2, &ui8_log_size);
         log_msg_end(temp_buff, &ui8_log_size);
-
+        _lock_acquire(&bufferLock);
         if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
             //BAFER JE PUN, TREBA SLATI PODATKE
-            websocket_app_start(data_buff, log_capacity);
-            void log_init();
+            send_log_function(data_buff, log_capacity);
+            log_init();
             buffer_write_log(data_buff, temp_buff, ui8_log_size); //posalji log za koji nije bilo mesta
         }
-
+        _lock_release(&bufferLock);
     }
 }

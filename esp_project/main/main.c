@@ -9,6 +9,7 @@
 #include "driver/gpio.h"
 #include "freertos/semphr.h"
 #include "driver/timer.h"
+#include "freertos/portmacro.h"
 #include <esp_err.h>
 #include "sdkconfig.h"
 #include "esp_log.h"
@@ -18,7 +19,6 @@
 #include "wifi.h"
 #include "esp_time.h"
 #include "esp_web.h"
-#include "socket.h"
 #include "esp_logging.h"
 
 #include <sys/time.h>
@@ -154,7 +154,6 @@ void timer_task(void *pvParameters) {
     bmx280_t* bmx280 = bmx280_create(I2C_NUM_0);
 
     if ( !bmx280 ) { 
-        //ESP_LOGE("test", "Could not create bmx280 driver.");
         LOGE_0( MODULE_TAG, 0x09 );
         return;
     }
@@ -176,16 +175,13 @@ void timer_task(void *pvParameters) {
             float temp = 0, pres = 0, hum = 0;
             ESP_ERROR_CHECK(bmx280_readoutFloat(bmx280, &temp, &pres, &hum));
             //bmp280 doesn't have hum sensor..
-            //ESP_LOGI("test", "Read Values: temp = %f, pres = %f", temp, pres);
             char buf1[16];
             char buf2[16];
             snprintf(buf1, 16, "%.2f", temp);  
             snprintf(buf2, 16, "%.2f", pres);
             LOGI_2( MODULE_TAG, 0x0b, &buf1, &buf2 );
-            //ESP_LOGI("test", "Read Values: temp = %s, pres = %s", buf1, buf2);
             char buf[16];
             snprintf(buf, 16, "%d", alarm_activation_num);
-            //ESP_LOGI("test", "alarm = %s", buf);        
             LOGI_1( MODULE_TAG, 0x0c, &buf);
             post_rest_function(temp, pres, alarm_activation_num);
 
@@ -196,7 +192,6 @@ void timer_task(void *pvParameters) {
 }
 
 void app_main(void) {
-   
     //create a queue to handle timer event from isr
     timer_evt_send_queue = xQueueCreate(10, sizeof(uint32_t));
     

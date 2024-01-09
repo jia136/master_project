@@ -6,7 +6,8 @@
 #define NEXT_ARG 58
 #define MSG_END  59
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
+
 
 typedef enum {
     LOG_NONE,       /*!< No log output */

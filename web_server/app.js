@@ -13,8 +13,6 @@ import logger from 'morgan'
 import indexRouter from './routes/index.js'
 import usersRouter from './routes/users.js'
 
-import { WebSocket } from 'ws'
-import { WebSocketServer } from 'ws';
 //import multer from 'multer'
 import fs from 'fs'
 import bodyParser from 'body-parser';
@@ -41,12 +39,9 @@ app.use(bodyParser.raw({
   limit: '10mb'
 }));
 
-//app.use('/images', express.static('images'));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-
-const wss = new WebSocketServer({ port: 5000 });
 
 app.locals.temperature= "[no data]";
 app.locals.pressure= "[no data]";
@@ -78,14 +73,6 @@ app.post('/ESPdata', async (req, res) => {
 app.get('/getSensor', async (req, res) => {
 
 });
-
-/*app.post('/temperature', async (req, res) => {
-  //var temp_val = { temp: req.body.temp }
-  //console.log(temp_val)
-  //app.locals.temperatura = JSON.stringify(temp_val)
-  //res.status(201).send(temp_val)
-  res.sendStatus(201);
-});*/
 
 app.post('/sensor', async (req, res) => {
   const { temp, pres, alarm } = req.body
@@ -136,31 +123,39 @@ app.post('/caplevel', async (req, res) => {
   res.status(201).send(cap_level);
 });
 
-wss.on('connection', function connection(ws) {
-  console.log('A new client Connected!');
+app.post('/logEsp', async (req, res) => {
 
-  ws.on('message', function incoming(message) {
+  req.pipe(fs.createWriteStream('./python_decoder/log_from_esp.txt' ))
+  .on('close', () => {
+    console.log('Esp log downloaded successfully!');
+  })
+  .on('error', (err) => {
+    console.error('Error downloading the esp log:', err);
+  });
+  res.status(201).send(`L${app.locals.log_level_esp}C${app.locals.cap_level_esp}`);
+  const python = spawn('python', ['./python_decoder/script1.py', './python_decoder/log_from_esp.txt', 'log_parsed_esp.csv']);
 
-    //console.log('received: %s', message); //ovde dobijam log poruku, ovo se parsira i posle salje u bazu podataka
+  python.on('close', (code) => {
+    console.log(`child process close all stdio with code ${code}`);
+  });
 
-    ws.send(`L${app.locals.log_level_esp}`);
-    ws.send(`C${app.locals.cap_level_esp}`);
+});
 
-    fs.writeFile('./python_decoder/log_from_esp.txt', message, (err) => { if (err) throw err; });
-    
-    var dataToSend;
-    const python = spawn('python', ['./python_decoder/script1.py']);
+app.post('/logEspCam', async (req, res) => {
+  
+  req.pipe(fs.createWriteStream('./python_decoder/log_from_esp_cam.txt' ))
+  .on('close', () => {
+    console.log('Esp log cam downloaded successfully!');
+  })
+  .on('error', (err) => {
+    console.error('Error downloading the esp log cam:', err);
+  });
+  res.status(201).send(`L${app.locals.log_level_esp}C${app.locals.cap_level_esp}`);
 
-    /*
-    python.stdout.on('data', function (data) {
-      dataToSend = data.toString();
-    });
-    */
+  const python = spawn('python', ['./python_decoder/script1.py', './python_decoder/log_from_esp_cam.txt', 'log_parsed_esp_cam.csv']);
 
-    python.on('close', (code) => {
-      console.log(`child process close all stdio with code ${code}`);
-    });
-
+  python.on('close', (code) => {
+    console.log(`child process close all stdio with code ${code}`);
   });
 
 });
@@ -208,10 +203,6 @@ app.post('/temp', async (req, res, next) => {
   console.log(send_image);
   const stream_image = await fs.createReadStream('./images/' + send_image);
   stream_image.pipe(res);
-  //res.sendFile(stream_image);
-  //const stream_image = await fs.createReadStream('./images/image.jpg').pipe(request.put('http://192.168.1.7:3000/image.jpg'));
-  //console.log('temp');
-  //res.status(200);
 });
 
 // catch 404 and forward to error handler

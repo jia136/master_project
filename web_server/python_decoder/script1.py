@@ -3,14 +3,16 @@ import json
 import csv
 import pathlib
 import mysql.connector
+import os
+import sys
 
 verbosity_string = {0: '[NONE]', 1: '[ERROR]', 2: '[WARNING]', 3: '[INFO] ', 4: '[DEBUG]', 5: '[VERBOSE]'}
 module_string = {0: 'cam_main', 1: 'esp_main', 2: 'cam_wifi', 3: 'cam_time', 4: 'esp_bmp', 5: 'esp_time', 6: 'esp_wifi'}
 
-def send_data_to_db():
+def send_data_to_db(parsed_log_file_name):
     print('send_data_to_db')
     # fetch data from csv file
-    csv_path = "log_parsed.csv"
+    csv_path = parsed_log_file_name
 
     dict_list = list()
     with open(csv_path, "r") as csv_reader:
@@ -37,10 +39,11 @@ def send_data_to_db():
     for x in myresult:
         print(x)
     mydatabase.close()
+    if os.path.exists(csv_path):
+        os.remove(csv_path)
 
 
-
-def parse_log(log_to_parse):
+def parse_log(log_to_parse, parsed_log_file_name):
     one_log = arr.array('i')
     print(log_to_parse)
     for one_char in log_to_parse:
@@ -80,14 +83,14 @@ def parse_log(log_to_parse):
                 print(e)
 
             try:
-                with open("log_parsed.csv", "a") as fp:
+                with open(parsed_log_file_name, "a") as fp:
                     fp.write(time_info + ',' + log_level + ',' + module_name + ',' + msg_string + '\n')
                     fp.close()
-                    # send_data_to_db()
             except FileNotFoundError as e:
                 print(e)
+    send_data_to_db(parsed_log_file_name)
 
-def read_log_file(file_name):
+def read_log_file(file_name, parsed_log_file_name):
     print("read log file foo")
     try:
         with open(file_name, 'rb') as file:  # 'r', 'w', 'a'
@@ -99,7 +102,7 @@ def read_log_file(file_name):
                         break
                     log_array.append(ord(char))
                 file.close()
-                parse_log(log_array)
+                parse_log(log_array, parsed_log_file_name)
             except TypeError as e:
                 print(e)
     except FileNotFoundError as e:
@@ -108,5 +111,6 @@ def read_log_file(file_name):
 
 if __name__ == '__main__':
     print('Hello from python')
-    log_file_name = "C:\\Users\\Jelena\\Desktop\\web_server\\python_decoder\\log_from_esp.txt"
-    read_log_file(log_file_name)
+    log_file_name = sys.argv[1]
+    parsed_log_file_name = sys.argv[2]
+    read_log_file(log_file_name, parsed_log_file_name)

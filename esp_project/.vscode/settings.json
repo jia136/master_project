@@ -21,7 +21,9 @@
     "esp_web.h": "c",
     "freertos.h": "c",
     "queue.h": "c",
-    "task.h": "c"
+    "task.h": "c",
+    "semphr.h": "c",
+    "esp_logging.h": "c"
   },
   "idf.adapterTargetName": "esp32"
 

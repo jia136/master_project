@@ -32,6 +32,7 @@ const clickHandler1 = async () => {
             //document.getElementById('paraID').innerHTML = JSON.stringify(data);
             for (let i = 0; i < data.length; i++) {
                 data_print[i] = "";
+                data_print[i] += data[i]["log_time"].toString() + " ";
                 data_print[i] += data[i]["log_level"].toString() + " ";
                 data_print[i] += data[i]["module"].toString() + " ";
                 data_print[i] += data[i]["message"].toString() + " ";

@@ -8,6 +8,7 @@
 
 #define BUFFER_SIZE 2048
 
+
 typedef enum {
     LOG_NONE,       /*!< No log output */
     LOG_ERROR,      /*!< Critical errors, software module can not recover on its own */
