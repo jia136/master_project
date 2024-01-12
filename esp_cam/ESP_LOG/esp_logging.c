@@ -9,7 +9,7 @@
 
 #define MAX_TEMP_BUFF 100
 
-static int16_t current_log_level = 4;       //info level is default
+static int16_t current_log_level = 4;      //default log level
 static int16_t current_log_capacity = 256; //in bytes
 int16_t log_capacity = 256;                //in bytes
 static _lock_t bufferLock = 0;
@@ -32,8 +32,8 @@ static void log_time( int8_t temp_buff[MAX_TEMP_BUFF] ) {
 	struct tm timeinfo;
 	time(&now);
 	localtime_r(&now, &timeinfo);
-	strftime(strftime_buf, sizeof(strftime_buf), "%x - %I:%M%p", &timeinfo);// 01/03/24 - 02:44PM
-    for (int32_t i = 0; i < 18; i++) {
+	strftime(strftime_buf, sizeof(strftime_buf), "%x-%I:%M%p", &timeinfo);// 01/03/24-02:44PM
+    for (int32_t i = 0; i < 16; i++) {
         temp_buff[i] = strftime_buf[i];
     }
     
@@ -69,9 +69,9 @@ void log_capacity_set(int16_t ui16_log_capacity) {
 
 static void log_vmi( int8_t temp_buff[MAX_TEMP_BUFF], uint16_t ui16_vmi_packed, int8_t * ui8_log_size ) {
 
-   temp_buff[18] = ((int8_t)(ui16_vmi_packed >> 8));
-   temp_buff[19] = ((int8_t)(ui16_vmi_packed & 0xFF));
-   (*ui8_log_size) = 20;
+   temp_buff[16] = ((int8_t)(ui16_vmi_packed >> 8));
+   temp_buff[17] = ((int8_t)(ui16_vmi_packed & 0xFF));
+   (*ui8_log_size) = 18;
 
 }
 
@@ -92,7 +92,7 @@ static void log_arg( int8_t temp_buff[MAX_TEMP_BUFF], const int8_t * const pui8_
    while (*(pui8_arg + i) != '\0') {
        temp_buff[i + (*ui8_log_size)] = (*(pui8_arg + i));
        ++i;
-       if (i >= 16) { //ogranicenje da svaki argument moze da ima najvise 16 byte
+       if (i >= 16) { //argument max size is 16 bytes
            break;
        }
    }
@@ -127,10 +127,10 @@ void log_msg_0( log_level_t log_level, uint16_t ui16_module, uint16_t ui16_id ) 
         log_msg_end(temp_buff, &ui8_log_size);
         _lock_acquire(&bufferLock);
         if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
-            //BAFER JE PUN, TREBA SLATI PODATKE
+            //buffer is full, send data to web server
             send_log_function(data_buff, log_capacity);
             log_init();
-            buffer_write_log(data_buff, temp_buff, ui8_log_size); //upisi log za koji nije bilo mesta
+            buffer_write_log(data_buff, temp_buff, ui8_log_size);
         }
         _lock_release(&bufferLock);
     }
@@ -152,10 +152,10 @@ void log_msg_1( log_level_t log_level, uint16_t ui16_module, uint16_t ui16_id, c
         log_msg_end(temp_buff, &ui8_log_size);
          _lock_acquire(&bufferLock);
         if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
-            //BAFER JE PUN, TREBA SLATI PODATKE
+            //buffer is full, send data to web server
             send_log_function(data_buff, log_capacity);
             log_init();
-            buffer_write_log(data_buff, temp_buff, ui8_log_size); //posalji log za koji nije bilo mesta
+            buffer_write_log(data_buff, temp_buff, ui8_log_size);
         }
         _lock_release(&bufferLock);
     }
@@ -179,10 +179,10 @@ void log_msg_2( log_level_t log_level, uint16_t ui16_module, uint16_t ui16_id, c
         log_msg_end(temp_buff, &ui8_log_size);
         _lock_acquire(&bufferLock);
         if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
-            //BAFER JE PUN, TREBA SLATI PODATKE
+            //buffer is full, send data to web server
             send_log_function(data_buff, log_capacity);
             log_init();
-            buffer_write_log(data_buff, temp_buff, ui8_log_size); //posalji log za koji nije bilo mesta
+            buffer_write_log(data_buff, temp_buff, ui8_log_size);
         }
         _lock_release(&bufferLock);
     }
@@ -208,10 +208,10 @@ void log_msg_3( log_level_t log_level, uint16_t ui16_module, uint16_t ui16_id, c
         log_msg_end(temp_buff, &ui8_log_size);
         _lock_acquire(&bufferLock);
         if ( buffer_write_log(data_buff, temp_buff, ui8_log_size) != 0 ) {
-            //BAFER JE PUN, TREBA SLATI PODATKE
+            //buffer is full, send data to web server
             send_log_function(data_buff, log_capacity);
             log_init();
-            buffer_write_log(data_buff, temp_buff, ui8_log_size); //posalji log za koji nije bilo mesta
+            buffer_write_log(data_buff, temp_buff, ui8_log_size);
         }
         _lock_release(&bufferLock);
     }

@@ -219,7 +219,7 @@ static esp_err_t bmx280_probe(bmx280_t *bmx280)
 {
     char buf[16];
     snprintf(buf, 16, "%d", bmx280->i2c_port);
-    LOGI_1(MODULE_TAG, 0x05, &buf);
+    LOGI_1(MODULE_TAG, PROBING_ON_I2C, &buf);
     #if CONFIG_BMX280_ADDRESS_HI
     bmx280->slave = 0xEE;
     return bmx280_probe_address(bmx280);
@@ -234,7 +234,7 @@ static esp_err_t bmx280_probe(bmx280_t *bmx280)
         bmx280->slave = 0xEE;
         if ((err = bmx280_probe_address(bmx280)) != ESP_OK)
         {
-            LOGE_0(MODULE_TAG, 0x04);
+            LOGE_0(MODULE_TAG, SENSOR_NOT_FOUND);
             bmx280->slave = 0xDE;
             bmx280->chip_id = 0xAD;
         }
@@ -251,7 +251,7 @@ static esp_err_t bmx280_reset(bmx280_t *bmx280)
 
 static esp_err_t bmx280_calibrate(bmx280_t *bmx280)
 {
-    LOGI_0(MODULE_TAG, 0x03);
+    LOGI_0(MODULE_TAG, READ_VALUES);
 
     esp_err_t err;
     uint8_t buf[26];
@@ -261,7 +261,7 @@ static esp_err_t bmx280_calibrate(bmx280_t *bmx280)
 
     if (err != ESP_OK) return err;
 
-    LOGI_0(MODULE_TAG, 0x02);
+    LOGI_0(MODULE_TAG, READ_LOW_BANK);
 
     bmx280->cmps.T1 = buf[0] | (buf[1] << 8);
     bmx280->cmps.T2 = buf[2] | (buf[3] << 8);
@@ -289,7 +289,7 @@ static esp_err_t bmx280_calibrate(bmx280_t *bmx280)
 
         if (err != ESP_OK) return err;
 
-        LOGI_0(MODULE_TAG, 0x01);
+        LOGI_0(MODULE_TAG, READ_HIGH_BANK);
 
         bmx280->cmps.H2 = buf[0] | (buf[1] << 8);
         bmx280->cmps.H3 = buf[2];
@@ -336,7 +336,7 @@ esp_err_t bmx280_init(bmx280_t* bmx280)
         // Read calibration data.
         bmx280_calibrate(bmx280);
 
-        LOGI_0(MODULE_TAG, 0x00);
+        LOGI_0(MODULE_TAG, DUMPING_CALIBRATION);
     }
 
     return error;

@@ -8,10 +8,9 @@
 
 #define BUFFER_SIZE 2048
 
-
 typedef enum {
     LOG_NONE,       /*!< No log output */
-    LOG_ERROR,      /*!< Critical errors, software module can not recover on its own */
+    LOG_ERROR,      /*!< Critical errors, software module cannot recover on its own */
     LOG_WARN,       /*!< Error conditions from which recovery measures have been taken */
     LOG_INFO,       /*!< Information messages which describe normal flow of events */
     LOG_DEBUG,      /*!< Extra information which is not necessary for normal use (values, pointers, sizes, etc). */

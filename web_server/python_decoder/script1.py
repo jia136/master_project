@@ -1,7 +1,6 @@
 import array as arr
 import json
 import csv
-import pathlib
 import mysql.connector
 import os
 import sys
@@ -50,14 +49,14 @@ def parse_log(log_to_parse, parsed_log_file_name):
         one_log.append(one_char)
         if one_char == 59:
             time_info = ""
-            for one_time in one_log[0:18]:
+            for one_time in one_log[0:16]:
                 time_info += str(chr(one_time))
-            msg_id = one_log[18]
-            log_level = str(verbosity_string.get(one_log[19] & 0x07))
-            module_name = str(module_string.get((one_log[19] & 0xF8) >> 3))
+            msg_id = one_log[16]
+            log_level = str(verbosity_string.get(one_log[17] & 0x07))
+            module_name = str(module_string.get((one_log[17] & 0xF8) >> 3))
             all_args = ["", "", ""]
-            if one_log[20] != 59:
-                del one_log[0:21]
+            if one_log[18] != 59:
+                del one_log[0:19]
                 i = 0
                 arg = ""
                 for arg_char in one_log:
@@ -102,6 +101,8 @@ def read_log_file(file_name, parsed_log_file_name):
                         break
                     log_array.append(ord(char))
                 file.close()
+                if os.path.exists(file_name):
+                    os.remove(file_name)
                 parse_log(log_array, parsed_log_file_name)
             except TypeError as e:
                 print(e)

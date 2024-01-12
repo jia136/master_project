@@ -1,6 +1,5 @@
 #define BOARD_ESP32CAM_AITHINKER
 
-#include <esp_log.h>
 #include <esp_system.h>
 #include <nvs_flash.h>
 #include <sys/param.h>
@@ -29,35 +28,10 @@
 #include "wifi.h"
 
 #include "esp_logging.h"
-#include "esp_log.h"
 #include "esp_time.h"
 #include "esp_camera.h"
 #include "esp_timer.h"
 #include "motion.h"
-
-
-// WROVER-KIT PIN Map
-#ifdef BOARD_WROVER_KIT
-
-#define CAM_PIN_PWDN -1  //power down is not used
-#define CAM_PIN_RESET -1 //software reset will be performed
-#define CAM_PIN_XCLK 21
-#define CAM_PIN_SIOD 26
-#define CAM_PIN_SIOC 27
-
-#define CAM_PIN_D7 35
-#define CAM_PIN_D6 34
-#define CAM_PIN_D5 39
-#define CAM_PIN_D4 36
-#define CAM_PIN_D3 19
-#define CAM_PIN_D2 18
-#define CAM_PIN_D1 5
-#define CAM_PIN_D0 4
-#define CAM_PIN_VSYNC 25
-#define CAM_PIN_HREF 23
-#define CAM_PIN_PCLK 22
-
-#endif
 
 // ESP32Cam (AiThinker) PIN Map
 #ifdef BOARD_ESP32CAM_AITHINKER
@@ -82,6 +56,9 @@
 
 #endif
 #define MODULE_TAG 0 //esp_cam module
+
+enum cam_msg{INIT_CAM, INIT_FAILED, CAPTURE_FAILED, COMPRESSION_FAILD, FORMAT_JPEG, CONV_TO_JPEG,
+ COMPRESSION_OK, MOTION_ON, CAMERA_ERR, CAMERA_INIT_DONE, CAMERA_AVAILABLE};
 
 #define MOTION_GPIO             13
 #define MOTION_INPUT_PIN_SEL    (1ULL << MOTION_GPIO)
@@ -135,7 +112,7 @@ static esp_err_t init_camera(void) {
     esp_err_t err = esp_camera_init(&camera_config);
     if (err != ESP_OK)
     {
-        LOGE_0(MODULE_TAG, 0x01);
+        LOGE_0(MODULE_TAG, INIT_FAILED);
         return err;
     }
 
@@ -155,7 +132,7 @@ esp_err_t client_event_post_handler(esp_http_client_event_handle_t evt) {
 
 void post_rest_function() {
     esp_http_client_config_t config_post = {
-        .url = "http://192.168.1.7:3000/test",
+        .url = "http://192.168.1.7:3000/camera",
         .method = HTTP_METHOD_POST,
         .cert_pem = NULL,
         .event_handler = client_event_post_handler};
@@ -166,11 +143,11 @@ void post_rest_function() {
     fb = esp_camera_fb_get();
 
     if (!fb) {
-        LOGE_0(MODULE_TAG, 0x02);
+        LOGE_0(MODULE_TAG, CAPTURE_FAILED);
     }
     else {
         if  (fb->format == PIXFORMAT_JPEG) {
-            LOGV_0(MODULE_TAG, 0x04);
+            LOGV_0(MODULE_TAG, FORMAT_JPEG);
             esp_http_client_handle_t client = esp_http_client_init(&config_post);
             esp_http_client_set_header(client, "Content-Type", "image/jpeg");
             esp_http_client_set_header(client, "Content-Length", (const char *)fb->buf);
@@ -181,14 +158,14 @@ void post_rest_function() {
             esp_http_client_cleanup(client);
         } 
         else {
-             LOGV_0(MODULE_TAG, 0x05);
+             LOGV_0(MODULE_TAG, CONV_TO_JPEG);
              bool jpeg_converted = frame2jpg(fb, 80, &fb_buf, &fb_len);
              if(!jpeg_converted){
-                LOGE_0(MODULE_TAG, 0x03);
+                LOGE_0(MODULE_TAG, COMPRESSION_FAILD);
                 esp_camera_fb_return(fb);
             }
             else {
-                LOGV_0(MODULE_TAG, 0x06);
+                LOGV_0(MODULE_TAG, COMPRESSION_OK);
                 esp_http_client_handle_t client = esp_http_client_init(&config_post);
                 esp_http_client_set_header(client, "Content-Type", "image/jpeg");
                 esp_http_client_set_header(client, "Content-Length", (const char *)fb_buf);
@@ -216,7 +193,7 @@ static void gpio_camera_task(void* arg) {
     for(;;) {
         if ( xQueueReceive(gpio_evt_motion_queue, &io_num, portMAX_DELAY) ) {
             post_rest_function();
-            LOGI_0(MODULE_TAG, 0x07);
+            LOGI_0(MODULE_TAG, MOTION_ON);
             vTaskDelay(pdMS_TO_TICKS(1000));
         }
     }
@@ -238,11 +215,11 @@ void app_main(void) {
 
 
 #if ESP_CAMERA_SUPPORTED
-    LOGV_0(MODULE_TAG, 0x0a);
+    LOGV_0(MODULE_TAG, CAMERA_AVAILABLE);
     if(ESP_OK != init_camera()) {
         return;
     }
-    LOGD_0(MODULE_TAG, 0x09);
+    LOGD_0(MODULE_TAG, CAMERA_INIT_DONE);
     //zero-initialize the config structure.
     gpio_config_t io_conf = {};
     //interrupt of rising edge
@@ -261,14 +238,12 @@ void app_main(void) {
 
     //create task
     xTaskCreate(gpio_camera_task, "gpio_camera_task", configMINIMAL_STACK_SIZE * 3, NULL, 10, NULL);
-    //install gpio isr service
-    //gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     //hook isr handler for specific gpio pin
     gpio_isr_handler_add(MOTION_GPIO, gpio_isr_handler, (void*) MOTION_GPIO);
 
     
 #else
-    LOGE_0(MODULE_TAG, 0x08);
+    LOGE_0(MODULE_TAG, CAMERA_ERR);
     return;
 #endif
 

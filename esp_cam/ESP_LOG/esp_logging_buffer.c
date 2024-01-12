@@ -23,12 +23,12 @@ int32_t buffer_write(char data_buff[BUFFER_SIZE], int8_t ui8_data) {
     }
     else if ( log_buffer.ui32_no_of_el < log_buffer.ui32_max_size ) {
         (log_buffer.ui32_no_of_el)++;
+        data_buff[log_buffer.ui32_head] = ui8_data;
+        log_buffer.ui32_head = i32_next_item;
     }
     else {
         b_ret_value = -1; //error
     }
-    data_buff[log_buffer.ui32_head] = ui8_data;
-    log_buffer.ui32_head = i32_next_item;
 
     return b_ret_value;
 
@@ -37,9 +37,6 @@ int32_t buffer_write(char data_buff[BUFFER_SIZE], int8_t ui8_data) {
 int32_t buffer_write_log(char data_buff[BUFFER_SIZE], int8_t temp_buff[MAX_TEMP_BUFF], uint8_t log_arg_num) {
 
     bool b_ret_value = 0;
-    //int32_t i32_next_item;
-
-    //i32_next_item = (log_buffer.ui32_head + log_arg_num) % (log_buffer.ui32_max_size);
 
     if ( ( log_buffer.ui32_head + log_arg_num ) > log_buffer.ui32_max_size ) {
         b_ret_value = 1; //no enough space for this log in buffer

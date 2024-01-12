@@ -53,11 +53,11 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
-            LOGI_0( MODULE_TAG, 0x01 );
+            LOGI_0( MODULE_TAG, RETRY_TO_CONNECT );
         } else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
         }
-        LOGW_0(MODULE_TAG, 0x00);
+        LOGW_0(MODULE_TAG, CONNECT_FAIL);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         s_retry_num = 0;
@@ -103,7 +103,7 @@ void wifi_init(void) {
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );
 
-    LOGI_0(MODULE_TAG, 0x02);
+    LOGI_0(MODULE_TAG, INIT_DONE);
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
@@ -116,11 +116,11 @@ void wifi_init(void) {
     /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
      * happened. */
     if (bits & WIFI_CONNECTED_BIT) {
-        LOGI_2(MODULE_TAG, 0x03, EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+        LOGI_2(MODULE_TAG, CONNECT_TO_SSID_PASS, EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
     } else if (bits & WIFI_FAIL_BIT) {
-        LOGW_2(MODULE_TAG, 0x04, EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+        LOGW_2(MODULE_TAG, FAIL_SSID_PASS, EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
     } else {
-        LOGE_0(MODULE_TAG, 0X05);
+        LOGE_0(MODULE_TAG, UNEXPECTED);
     }
 
     /* The event will not be processed after unregister */

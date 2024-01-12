@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'url';
 import new_path from 'path';
-import { getESPdata, getESPonedata, createEspData } from './database.js';
+import { getESPdata } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = new_path.dirname(__filename);
@@ -46,7 +46,7 @@ app.use('/users', usersRouter);
 app.locals.temperature= "[no data]";
 app.locals.pressure= "[no data]";
 app.locals.alarm= "[no data]";
-app.locals.log_level_esp="2"; //WARNING - log level
+app.locals.log_level_esp="4"; //DEBUG - log level
 app.locals.cap_level_esp="3"; //1024 bytes - cap level
 
 app.locals.imageNum = 0;
@@ -55,23 +55,6 @@ app.locals.imageNum = 0;
 app.get('/ESPdata', async (req, res) => {
   const ESPdata = await getESPdata()
   res.send(ESPdata)
-});
-
-//MySQLESP get one data from database
-app.get('/ESPdata/:id', async (req, res) => {
-  const id = req.params.id
-  const ESPdata = await getESPonedata(id)
-  res.send(ESPdata)
-});
-
-app.post('/ESPdata', async (req, res) => {
-  const { title, value } = req.body
-  const sensor_data = await createEspData(title, value)
-  res.status(201).send(sensor_data)
-});
-
-app.get('/getSensor', async (req, res) => {
-
 });
 
 app.post('/sensor', async (req, res) => {
@@ -85,7 +68,7 @@ app.post('/sensor', async (req, res) => {
   res.sendStatus(201);
 });
 
-app.post('/test', async(req, res) => {
+app.post('/camera', async(req, res) => {
 
   req.pipe(fs.createWriteStream('./images/image_' + app.locals.imageNum + '.jpg' ))
   .on('close', () => {
@@ -97,11 +80,6 @@ app.post('/test', async(req, res) => {
   app.locals.imageNum++;
   res.sendStatus(201)
   
-});
-
-app.get('/test', async (req, res) => {
-
-  res.sendStatus(201)
 });
 
 app.post('/clicked', async (req, res) => {
@@ -183,7 +161,7 @@ app.get('/image', async (req, res) => {
     this.image_size = image_size;
     this.image_time = image_time;
   }
-  // create an array restaurants
+  // create an array
   var imagejson = [];
   // add objects to the array
   files.forEach(function each(item, index) {

@@ -43,6 +43,9 @@
 #define ESP_INTR_FLAG_DEFAULT 0
 #define MODULE_TAG 1
 
+enum esp_msg {CANNOT_PING, PING_ERR, ECHO_ERR, BUZZ_OFF, MEASURE_ERR, MEASURE_RESP,
+ DISTANCE, DIST_VIOLATION, BUZZ_ON, BMP_DRIVER_ERR, BMP_DRIVER_OK, TEMP_PRES_VALUES, BUZZ_NUM_ACTIVE};
+
 static xQueueHandle timer_evt_send_queue = NULL;
 
 static bool IRAM_ATTR timer_group_isr_callback(void * arg) {
@@ -74,31 +77,31 @@ void ultrasonic_task(void *pvParameters) {
         float distance;
         esp_err_t res = ultrasonic_measure(&sensor, MAX_DISTANCE_CM, &distance);
         if ( res != ESP_OK ) {
-            LOGE_1( MODULE_TAG, 0x05, (char *)res);
+            LOGE_1( MODULE_TAG, MEASURE_RESP, (char *)res);
             switch (res) {
                 case ESP_ERR_ULTRASONIC_PING:
-                    LOGE_0( MODULE_TAG, 0x00 );                    
+                    LOGE_0( MODULE_TAG, CANNOT_PING );                    
                     break;
                 case ESP_ERR_ULTRASONIC_PING_TIMEOUT:
-                    LOGE_0( MODULE_TAG, 0x01 );
+                    LOGE_0( MODULE_TAG, PING_ERR );
                     break;
                 case ESP_ERR_ULTRASONIC_ECHO_TIMEOUT:
-                    LOGE_0( MODULE_TAG, 0x02 );                    
+                    LOGE_0( MODULE_TAG, ECHO_ERR );                    
                     buzzer_set(&buzzer, BUZZER_OFF);
-                    LOGW_0( MODULE_TAG, 0x03 );
+                    LOGW_0( MODULE_TAG, BUZZ_OFF );
                     break;
                 default:
-                    LOGE_1( MODULE_TAG, 0x04, esp_err_to_name(res));
+                    LOGE_1( MODULE_TAG, MEASURE_ERR, esp_err_to_name(res));
             }
         }
         else {
             char buf[16];  
             snprintf(buf, 16, "%.2f", distance);
-            LOGD_1( MODULE_TAG, 0x06, buf );
+            LOGD_1( MODULE_TAG, DISTANCE, buf );
             if (distance < 0.3) {
-                LOGV_0( MODULE_TAG, 0x07 );
+                LOGV_0( MODULE_TAG, DIST_VIOLATION );
                 buzzer_set(&buzzer, BUZZER_ON);
-                LOGV_0( MODULE_TAG, 0x08 );
+                LOGV_0( MODULE_TAG, BUZZ_ON );
                 if ( !last_state ) {
                     ++alarm_activation_num;
                 }
@@ -106,7 +109,7 @@ void ultrasonic_task(void *pvParameters) {
             }
             else {
                 buzzer_set(&buzzer, BUZZER_OFF);
-                LOGV_0( MODULE_TAG, 0x03 );
+                LOGV_0( MODULE_TAG, BUZZ_OFF );
                 last_state = 0;
             }
         }
@@ -154,10 +157,10 @@ void timer_task(void *pvParameters) {
     bmx280_t* bmx280 = bmx280_create(I2C_NUM_0);
 
     if ( !bmx280 ) { 
-        LOGE_0( MODULE_TAG, 0x09 );
+        LOGE_0( MODULE_TAG, BMP_DRIVER_ERR );
         return;
     }
-    LOGD_0( MODULE_TAG, 0x0a );
+    LOGD_0( MODULE_TAG, BMP_DRIVER_OK );
     ESP_ERROR_CHECK(bmx280_init(bmx280));
 
     bmx280_config_t bmx_cfg = BMX280_DEFAULT_CONFIG;
@@ -179,10 +182,10 @@ void timer_task(void *pvParameters) {
             char buf2[16];
             snprintf(buf1, 16, "%.2f", temp);  
             snprintf(buf2, 16, "%.2f", pres);
-            LOGI_2( MODULE_TAG, 0x0b, &buf1, &buf2 );
+            LOGI_2( MODULE_TAG, TEMP_PRES_VALUES, &buf1, &buf2 );
             char buf[16];
             snprintf(buf, 16, "%d", alarm_activation_num);
-            LOGI_1( MODULE_TAG, 0x0c, &buf);
+            LOGI_1( MODULE_TAG, BUZZ_NUM_ACTIVE, &buf);
             post_rest_function(temp, pres, alarm_activation_num);
 
             vTaskDelay(pdMS_TO_TICKS(100));
@@ -207,7 +210,6 @@ void app_main(void) {
     time_init();    
         
     //create tasks
-
     xTaskCreate(ultrasonic_task, "ultrasonic_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
     xTaskCreate(timer_task, "timer_task", configMINIMAL_STACK_SIZE * 3, NULL, 10, NULL);
 

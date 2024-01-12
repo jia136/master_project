@@ -13,14 +13,3 @@ export async function getESPdata() {
     const [rows] = await pool.query("SELECT * FROM esp_log_t")
     return rows
 }
-
-export async function getESPonedata(id){
-    const [rows] = await pool.query("SELECT * FROM esp_log_t  WHERE id = ?", [id])
-    return rows[0]
-}
-
-export async function createEspData(title, value) {
-    const [result] = await pool.query("INSERT INTO esp_log_t (title, value) VALUES (?, ?)", [title, value])
-    const id = result.insertId
-    return getESPonedata(id)
-}

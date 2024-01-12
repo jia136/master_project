@@ -21,6 +21,8 @@ extern "C" {
 
 #define BMXAPI extern
 
+enum bmp_msg {DUMPING_CALIBRATION, READ_HIGH_BANK, READ_LOW_BANK, READ_VALUES, SENSOR_NOT_FOUND, PROBING_ON_I2C};
+
 /**
  * Anonymous structure to driver settings.
  */

@@ -6,15 +6,15 @@
 #include "esp_sleep.h"
 #include "esp_sntp.h"
 #include "esp_logging.h"
+#include "esp_time.h"
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-char Current_Date_Time[100];
 #define MODULE_TAG 5 //esp_time module
 
 void time_sync_notification_cb(struct timeval *tv) {
-    LOGI_0(MODULE_TAG, 0x00);
+    LOGI_0(MODULE_TAG, TIME_SYNC_EVENT);
 }
 
 void Get_current_date_time(char *date_time) {
@@ -34,7 +34,7 @@ void Get_current_date_time(char *date_time) {
 
 
 static void initialize_sntp(void) {
-    LOGI_0(MODULE_TAG, 0x01);
+    LOGI_0(MODULE_TAG, INIT_SNTP);
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "pool.ntp.org");
     sntp_set_time_sync_notification_cb(time_sync_notification_cb);
@@ -57,7 +57,7 @@ static void obtain_time(void) {
     while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count) {
         snprintf(buf1, 16, "%d", retry);  
         snprintf(buf2, 16, "%d", retry_count);
-        LOGI_2(MODULE_TAG, 0x02, &buf1, &buf2);
+        LOGI_2(MODULE_TAG, WAITING_TO_BE_SET, &buf1, &buf2);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
     time(&now);
@@ -72,12 +72,10 @@ static void obtain_time(void) {
 	localtime_r(&now, &timeinfo);
 	// Is time set? If not, tm_year will be (1970 - 1900).
 	if (timeinfo.tm_year < (2016 - 1900)) {
-	    LOGI_0(MODULE_TAG, 0x03);
+	    LOGI_0(MODULE_TAG, TIME_NOT_SET);
 	    obtain_time();
 	    // update 'now' variable with current time
 	    time(&now);
 	}
-    Get_current_date_time(Current_Date_Time);
-	printf("******current date and time is = %s\n",Current_Date_Time);
 
 }
