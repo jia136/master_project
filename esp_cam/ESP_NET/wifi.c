@@ -11,8 +11,8 @@
 #include "lwip/sys.h"
 #include "wifi.h"
 
-#define EXAMPLE_ESP_WIFI_SSID      "Petrovic"
-#define EXAMPLE_ESP_WIFI_PASS      "JelkaiVerka"
+#define EXAMPLE_ESP_WIFI_SSID      "..."
+#define EXAMPLE_ESP_WIFI_PASS      "..."
 #define EXAMPLE_ESP_MAXIMUM_RETRY  4
 
 #if CONFIG_ESP_WIFI_AUTH_OPEN
